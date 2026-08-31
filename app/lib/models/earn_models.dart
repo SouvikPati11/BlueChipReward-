@@ -1,0 +1,156 @@
+/// Models for the earning features. Most are thin wrappers over the jsonb
+/// envelopes returned by the RPCs.
+
+class DailyStatus {
+  final bool claimedToday;
+  final int currentStreak;
+  final String nextAvailableUtc;
+
+  const DailyStatus({
+    required this.claimedToday,
+    required this.currentStreak,
+    required this.nextAvailableUtc,
+  });
+
+  factory DailyStatus.fromJson(Map<String, dynamic> j) => DailyStatus(
+        claimedToday: j['claimed_today'] as bool? ?? false,
+        currentStreak: (j['current_streak'] as num?)?.toInt() ?? 0,
+        nextAvailableUtc: j['next_available_utc'] as String? ?? '',
+      );
+}
+
+class MiningStatus {
+  final bool active;
+  final String? sessionId;
+  final DateTime? startedAt;
+  final DateTime? endsAt;
+  final int ratePerHour;
+  final int accrued;
+  final int claimable;
+  final bool completed;
+  final int sessionHours;
+
+  const MiningStatus({
+    required this.active,
+    this.sessionId,
+    this.startedAt,
+    this.endsAt,
+    required this.ratePerHour,
+    this.accrued = 0,
+    this.claimable = 0,
+    this.completed = false,
+    this.sessionHours = 8,
+  });
+
+  factory MiningStatus.fromJson(Map<String, dynamic> j) => MiningStatus(
+        active: j['active'] as bool? ?? false,
+        sessionId: j['session_id'] as String?,
+        startedAt: j['started_at'] != null
+            ? DateTime.parse(j['started_at'] as String)
+            : null,
+        endsAt:
+            j['ends_at'] != null ? DateTime.parse(j['ends_at'] as String) : null,
+        ratePerHour: (j['rate_per_hour'] as num?)?.toInt() ?? 0,
+        accrued: (j['accrued'] as num?)?.toInt() ?? 0,
+        claimable: (j['claimable'] as num?)?.toInt() ?? 0,
+        completed: j['completed'] as bool? ?? false,
+        sessionHours: (j['session_hours'] as num?)?.toInt() ?? 8,
+      );
+}
+
+class QuizQuestion {
+  final String id;
+  final String question;
+  final List<String> options;
+
+  const QuizQuestion(
+      {required this.id, required this.question, required this.options});
+
+  factory QuizQuestion.fromJson(Map<String, dynamic> j) => QuizQuestion(
+        id: j['id'] as String,
+        question: j['question'] as String,
+        options:
+            (j['options'] as List).map((e) => e.toString()).toList(growable: false),
+      );
+}
+
+class DailyQuiz {
+  final bool available;
+  final String? quizId;
+  final String title;
+  final int reward;
+  final List<QuizQuestion> questions;
+  final bool attempted;
+  final int? resultCorrect;
+  final int? resultTotal;
+  final int? resultReward;
+
+  const DailyQuiz({
+    required this.available,
+    this.quizId,
+    this.title = '',
+    this.reward = 0,
+    this.questions = const [],
+    this.attempted = false,
+    this.resultCorrect,
+    this.resultTotal,
+    this.resultReward,
+  });
+
+  factory DailyQuiz.fromJson(Map<String, dynamic> j) {
+    final result = j['result'] as Map<String, dynamic>?;
+    return DailyQuiz(
+      available: j['available'] as bool? ?? false,
+      quizId: j['quiz_id'] as String?,
+      title: j['title'] as String? ?? '',
+      reward: (j['reward'] as num?)?.toInt() ?? 0,
+      questions: ((j['questions'] as List?) ?? [])
+          .map((e) => QuizQuestion.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      attempted: j['attempted'] as bool? ?? false,
+      resultCorrect: (result?['correct'] as num?)?.toInt(),
+      resultTotal: (result?['total'] as num?)?.toInt(),
+      resultReward: (result?['reward'] as num?)?.toInt(),
+    );
+  }
+}
+
+class TaskItem {
+  final String id;
+  final String title;
+  final String? description;
+  final String type;
+  final int reward;
+  final String? actionUrl;
+  final String? instructions;
+  final bool autoVerify;
+  final String? completionState; // null = not attempted
+
+  const TaskItem({
+    required this.id,
+    required this.title,
+    this.description,
+    required this.type,
+    required this.reward,
+    this.actionUrl,
+    this.instructions,
+    required this.autoVerify,
+    this.completionState,
+  });
+
+  factory TaskItem.fromJson(Map<String, dynamic> j) => TaskItem(
+        id: j['id'] as String,
+        title: j['title'] as String,
+        description: j['description'] as String?,
+        type: j['type'] as String? ?? 'link_visit',
+        reward: (j['reward'] as num?)?.toInt() ?? 0,
+        actionUrl: j['action_url'] as String?,
+        instructions: j['instructions'] as String?,
+        autoVerify: j['auto_verify'] as bool? ?? false,
+        completionState: j['completion_state'] as String?,
+      );
+
+  bool get isDone =>
+      completionState == 'rewarded' || completionState == 'verified';
+  bool get isPending => completionState == 'pending';
+}

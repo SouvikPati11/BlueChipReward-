@@ -1,0 +1,38 @@
+# ---- Flutter / Dart ----
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/build/
+app/.pub-cache/
+app/.pub/
+**/generated_plugin_registrant.dart
+*.g.dart.lock
+
+# Android is generated in CI via `flutter create` + tool/patch_android.py
+app/android/
+app/ios/
+app/linux/
+app/macos/
+app/windows/
+app/web/
+
+# Local secrets / signing
+**/local.properties
+**/key.properties
+**/*.keystore
+**/*.jks
+app/android/app/google-services.json
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Node (edge function local tooling, if any)
+node_modules/

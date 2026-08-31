@@ -1,0 +1,78 @@
+import '../../core/error/failure.dart';
+import '../../core/supabase/supabase_client.dart';
+import '../../models/earn_models.dart';
+
+/// All earning actions go through server RPCs — the client only expresses intent.
+class EarnRepository {
+  Future<Map<String, dynamic>> _rpc(String fn,
+      [Map<String, dynamic>? params]) async {
+    try {
+      final res = await Db.client.rpc(fn, params: params);
+      return (res as Map).cast<String, dynamic>();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  // ---- Daily reward --------------------------------------------------------
+  Future<DailyStatus> dailyStatus() async =>
+      DailyStatus.fromJson(await _rpc('daily_reward_status'));
+
+  Future<Map<String, dynamic>> claimDaily() => _rpc('claim_daily_reward');
+
+  // ---- Mining --------------------------------------------------------------
+  Future<MiningStatus> miningStatus() async =>
+      MiningStatus.fromJson(await _rpc('mining_status'));
+
+  Future<Map<String, dynamic>> startMining() => _rpc('start_mining');
+
+  Future<Map<String, dynamic>> claimMining() => _rpc('claim_mining');
+
+  // ---- Scratch -------------------------------------------------------------
+  Future<Map<String, dynamic>> scratchStatus() => _rpc('scratch_status');
+
+  Future<Map<String, dynamic>> scratchReveal(String cardId) =>
+      _rpc('scratch_reveal', {'p_card_id': cardId});
+
+  // ---- Ads -----------------------------------------------------------------
+  Future<Map<String, dynamic>> rewardAd() => _rpc('reward_ad');
+
+  // ---- Quiz ----------------------------------------------------------------
+  Future<DailyQuiz> quizToday() async =>
+      DailyQuiz.fromJson(await _rpc('quiz_today'));
+
+  Future<Map<String, dynamic>> submitQuiz(
+          String quizId, List<Map<String, dynamic>> answers) =>
+      _rpc('submit_quiz', {'p_quiz_id': quizId, 'p_answers': answers});
+
+  // ---- Tasks ---------------------------------------------------------------
+  Future<List<TaskItem>> fetchTasks() async {
+    try {
+      final uid = Db.uid!;
+      final tasks = await Db.client
+          .from('tasks')
+          .select()
+          .eq('active', true)
+          .order('position');
+      final completions = await Db.client
+          .from('task_completions')
+          .select('task_id, state')
+          .eq('user_id', uid);
+      final stateByTask = {
+        for (final c in (completions as List))
+          c['task_id'] as String: c['state'] as String
+      };
+      return (tasks as List).map((e) {
+        final m = (e as Map).cast<String, dynamic>();
+        m['completion_state'] = stateByTask[m['id']];
+        return TaskItem.fromJson(m);
+      }).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> submitTask(String taskId,
+          {Map<String, dynamic>? proof}) =>
+      _rpc('submit_task', {'p_task_id': taskId, 'p_proof': proof ?? {}});
+}

@@ -1,0 +1,9 @@
+# Supabase project configuration for BlueChip Rewards.
+# `supabase link --project-ref <ref>` then `supabase db push` / `supabase functions deploy`.
+project_id = "bluechip-rewards"
+
+[db]
+major_version = 15
+
+[functions.admob-ssv-callback]
+verify_jwt = false

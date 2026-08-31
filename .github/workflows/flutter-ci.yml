@@ -1,0 +1,95 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: "3.24.0"
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  analyze:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+        continue-on-error: true
+      - name: Analyze
+        run: flutter analyze
+      - name: Run tests
+        run: flutter test
+
+  build:
+    name: Build Android (APK + AAB)
+    needs: analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Generate & patch Android project
+        env:
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+        run: |
+          flutter create --platforms=android --org com.bluechip --project-name bluechip_rewards .
+          python3 tool/patch_android.py
+
+      - name: Write runtime config (.env)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          ADMOB_REWARDED_AD_UNIT: ${{ secrets.ADMOB_REWARDED_AD_UNIT }}
+        run: |
+          cat > assets/.env <<EOF
+          SUPABASE_URL=${SUPABASE_URL:-https://YOUR-PROJECT-ref.supabase.co}
+          SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-YOUR-SUPABASE-ANON-KEY}
+          GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID:-}
+          ADMOB_REWARDED_AD_UNIT=${ADMOB_REWARDED_AD_UNIT:-ca-app-pub-3940256099942544/5224354917}
+          EOF
+
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      - name: Build release AAB (unsigned)
+        run: flutter build appbundle --release
+        continue-on-error: true
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: bluechip-rewards-apk
+          path: app/build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: warn
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: bluechip-rewards-aab
+          path: app/build/app/outputs/bundle/release/*.aab
+          if-no-files-found: warn

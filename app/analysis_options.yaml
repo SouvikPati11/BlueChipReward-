@@ -1,0 +1,16 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # Keep genuine compile errors fatal, but don't fail CI on these
+    # non-critical hygiene lints (they stay visible as info).
+    invalid_annotation_target: ignore
+    unused_import: info
+    unused_local_variable: info
+    unused_field: info
+    unused_element: info
+    dead_code: info
+    deprecated_member_use: info
+  exclude:
+    - "**/*.g.dart"
+    - "android/**"
