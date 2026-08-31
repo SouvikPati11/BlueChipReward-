@@ -67,6 +67,27 @@ jobs:
           ADMOB_REWARDED_AD_UNIT=${ADMOB_REWARDED_AD_UNIT:-ca-app-pub-3940256099942544/5224354917}
           EOF
 
+      - name: Configuration status (no secret values printed)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_REWARDED_AD_UNIT: ${{ secrets.ADMOB_REWARDED_AD_UNIT }}
+        run: |
+          chk() { if [ -n "${2:-}" ]; then echo "  present  $1"; else echo "  MISSING  $1"; fi; }
+          echo "Configuration status — secret VALUES are never printed, only present/missing:"
+          echo "Required for the app to run (Supabase + email sign-in):"
+          chk "SUPABASE_URL" "$SUPABASE_URL"
+          chk "SUPABASE_ANON_KEY" "$SUPABASE_ANON_KEY"
+          echo "Required for Google Sign-In to work on the phone:"
+          chk "GOOGLE_WEB_CLIENT_ID" "$GOOGLE_WEB_CLIENT_ID"
+          chk "ANDROID_KEYSTORE_BASE64 (release signing / stable SHA-1)" "$ANDROID_KEYSTORE_BASE64"
+          echo "Optional — real ads (Google test ads are used until these are set):"
+          chk "ADMOB_APP_ID" "$ADMOB_APP_ID"
+          chk "ADMOB_REWARDED_AD_UNIT" "$ADMOB_REWARDED_AD_UNIT"
+
       - name: Build release APK & AAB
         run: |
           flutter build apk --release
