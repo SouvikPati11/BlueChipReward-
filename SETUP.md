@@ -80,26 +80,33 @@ repository secret**. Add only the ones for the phases you've reached.
 
 Google Sign-In needs a stable signing key so Google recognises your app.
 
-> ⚠️ The keystore-generator prints your signing key into the workflow log so you
-> can copy it from a phone. **Do this only on a private repository** and delete
-> the run right after you save the secrets. (Make the repo private at
-> repo → Settings → General → Danger Zone if it isn't already.)
+The keystore generator **stores the key straight into your repo's secrets via
+the GitHub API and prints nothing sensitive** — only the SHA-1 (which is not a
+secret). It's safe to run on a public repo.
 
-1. GitHub → **Actions → Generate Signing Keystore → Run workflow**. When it
-   finishes, open the run **Summary**: it lists the four `ANDROID_*` secret
-   values and your **SHA-1 / SHA-256** fingerprints. Copy the four values into
-   GitHub secrets (the long `ANDROID_KEYSTORE_BASE64` is printed in the job log).
-   **Delete that workflow run afterwards.**
-2. In **Google Cloud Console** (console.cloud.google.com):
+1. **Create a one-time token** so the workflow can write secrets (the built-in
+   token isn't allowed to): GitHub → your avatar → **Settings → Developer
+   settings → Personal access tokens → Fine-grained tokens → Generate new
+   token**. Set **Repository access → Only select repositories → this repo**,
+   and **Permissions → Repository permissions → Secrets → Read and write**.
+   Generate it, then save it as a repo secret named **`KEYSTORE_ADMIN_TOKEN`**
+   (Settings → Secrets and variables → Actions → New repository secret).
+2. GitHub → **Actions → Generate Signing Keystore → Run workflow**. When it
+   finishes, the four `ANDROID_*` secrets already exist (their values were never
+   printed). Open the run's **log** and copy only the **SHA-1** line.
+3. You can now **delete the `KEYSTORE_ADMIN_TOKEN` secret**.
+4. In **Google Cloud Console** (console.cloud.google.com):
    - Create/select a project → **APIs & Services → Credentials**.
    - **Create Credentials → OAuth client ID → Android**: package name
-     `com.bluechip.bluechip_rewards`, and paste the **SHA-1** from step 1.
+     `com.bluechip.bluechip_rewards`, and paste the **SHA-1** from step 2.
    - **Create Credentials → OAuth client ID → Web application**. Copy its
-     **Client ID** into the `GOOGLE_WEB_CLIENT_ID` secret.
+     **Client ID** into the `GOOGLE_WEB_CLIENT_ID` secret. (You already created
+     this Web client for Supabase — reuse it; just make sure it's saved as the
+     `GOOGLE_WEB_CLIENT_ID` GitHub secret.)
    - Configure the **OAuth consent screen** if asked.
-3. In **Supabase → Authentication → Providers → Google**: enable it and paste
-   the **Web** client ID and secret.
-4. Run **Release Build** again and reinstall the APK. Google Sign-In now works.
+5. In **Supabase → Authentication → Providers → Google**: enable it and paste
+   the **Web** client ID and secret. *(Already done.)*
+6. Run **Release Build** again and reinstall the APK. Google Sign-In now works.
 
 ## Phase 5 — Real ads with AdMob (optional)
 
