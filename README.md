@@ -28,6 +28,11 @@ The client is **never** the source of truth for points or money.
 
 ## Setup
 
+> **📱 On a phone with no computer?** Follow **[SETUP.md](SETUP.md)** — a
+> step-by-step checklist that configures Supabase, Google Sign-In, AdMob, and
+> builds an installable APK entirely from github.com and supabase.com. The
+> notes below are the equivalent flow for a computer with the CLIs installed.
+
 ### 1. Supabase
 1. Create a project at supabase.com.
 2. Push the schema & functions:

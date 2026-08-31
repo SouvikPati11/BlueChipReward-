@@ -1,0 +1,121 @@
+name: Release Build
+
+# Produces an installable release APK (and a Play-ready AAB) and publishes them
+# to a GitHub Release, so you can download and install the app straight onto
+# your phone. No local Flutter or Android Studio required.
+#
+# Run from the GitHub UI: Actions -> "Release Build" -> Run workflow.
+#
+# Signing: if the ANDROID_KEYSTORE_* secrets exist (see "Generate Signing
+# Keystore"), the build is signed with your production key — required for Google
+# Sign-In and Play uploads. Without them it still produces a debug-signed APK
+# that installs and runs (email sign-in + test ads work).
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag/name"
+        required: true
+        default: "v1.0.0"
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: app
+
+env:
+  FLUTTER_VERSION: "3.32.0"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Generate & patch Android project
+        env:
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+        run: |
+          flutter create --platforms=android --org com.bluechip --project-name bluechip_rewards .
+          python3 tool/patch_android.py
+
+      - name: Write runtime config (.env)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          ADMOB_REWARDED_AD_UNIT: ${{ secrets.ADMOB_REWARDED_AD_UNIT }}
+        run: |
+          cat > assets/.env <<EOF
+          SUPABASE_URL=${SUPABASE_URL:-https://YOUR-PROJECT-ref.supabase.co}
+          SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-YOUR-SUPABASE-ANON-KEY}
+          GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID:-}
+          ADMOB_REWARDED_AD_UNIT=${ADMOB_REWARDED_AD_UNIT:-ca-app-pub-3940256099942544/5224354917}
+          EOF
+
+      - name: Build release APK & AAB
+        run: |
+          flutter build apk --release
+          flutter build appbundle --release
+
+      - name: Sign artifacts (if keystore secrets present)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          APK=build/app/outputs/flutter-apk/app-release.apk
+          AAB=build/app/outputs/bundle/release/app-release.aab
+          if [ -z "${KS_B64:-}" ]; then
+            echo "No signing secrets found — keeping Flutter's debug-signed release build."
+            echo "SIGNED=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          echo "$KS_B64" | base64 -d > release.jks
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          BT="$(find "$SDK/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -1)"
+          "$BT/zipalign" -f 4 "$APK" app-release-aligned.apk
+          "$BT/apksigner" sign \
+            --ks release.jks --ks-pass "pass:$KS_PASS" \
+            --ks-key-alias "$KEY_ALIAS" --key-pass "pass:$KEY_PASS" \
+            --out "$APK" app-release-aligned.apk
+          "$BT/apksigner" verify "$APK"
+          # Sign the AAB (upload key) for Play.
+          jarsigner -keystore release.jks -storepass "$KS_PASS" -keypass "$KEY_PASS" \
+            -sigalg SHA256withRSA -digestalg SHA-256 "$AAB" "$KEY_ALIAS"
+          rm -f release.jks app-release-aligned.apk
+          echo "SIGNED=true" >> "$GITHUB_ENV"
+
+      - name: Stage artifacts
+        run: |
+          mkdir -p out
+          cp build/app/outputs/flutter-apk/app-release.apk "out/bluechip-rewards-${{ github.event.inputs.tag }}.apk"
+          cp build/app/outputs/bundle/release/app-release.aab "out/bluechip-rewards-${{ github.event.inputs.tag }}.aab" || true
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="Signed: ${SIGNED:-false}. Install the .apk on your Android phone (allow installing from unknown sources). The .aab is for Google Play uploads."
+          gh release create "${{ github.event.inputs.tag }}" \
+            --title "BlueChip Rewards ${{ github.event.inputs.tag }}" \
+            --notes "$NOTES" \
+            --target "${{ github.ref_name }}" \
+            out/*.apk out/*.aab \
+          || gh release upload "${{ github.event.inputs.tag }}" out/*.apk out/*.aab --clobber
