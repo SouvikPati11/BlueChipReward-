@@ -8,7 +8,9 @@ on:
   workflow_dispatch:
 
 env:
-  FLUTTER_VERSION: "3.24.0"
+  # A recent stable whose generated Android Gradle scaffold is compatible with
+  # current plugin versions (app_links 6.x, google_mobile_ads 5.x, etc.).
+  FLUTTER_VERSION: "3.32.0"
 
 defaults:
   run:
