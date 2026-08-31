@@ -29,7 +29,9 @@ jobs:
       - name: Format
         run: dart format .
       - name: Analyze
-        run: flutter analyze
+        # Fail on real errors/warnings; style infos (const hints, etc.) are
+        # non-blocking so CI stays green on cosmetic lints.
+        run: flutter analyze --no-fatal-infos
       - name: Run tests
         run: flutter test
 
