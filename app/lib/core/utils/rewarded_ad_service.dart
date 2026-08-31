@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../config/app_config.dart';
-import '../supabase/supabase_client.dart';
 
 /// Loads and shows AdMob rewarded ads. On a valid reward callback it resolves
 /// so the caller can hit the server RPC. The server — not this callback — is
@@ -41,18 +40,13 @@ class RewardedAdService {
   }
 
   /// Shows the ad. Returns true if the user earned the reward. The SSV callback
-  /// carries the user id as custom data for optional server-side verification.
+  /// Rewarding is authorised server-side by reward_ad(); the optional AdMob SSV
+  /// callback can additionally verify completion (configure it in the AdMob
+  /// console with the signed-in user's id as custom data).
   Future<bool> show() async {
     if (_ad == null) await preload();
     final ad = _ad;
     if (ad == null) return false;
-
-    final uid = Db.uid;
-    if (uid != null) {
-      ad.setServerSideVerificationOptions(
-        ServerSideVerificationOptions(userId: uid, customData: uid),
-      );
-    }
 
     final completer = Completer<bool>();
     var earned = false;

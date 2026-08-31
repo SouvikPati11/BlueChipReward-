@@ -1,5 +1,5 @@
-/// Models for the earning features. Most are thin wrappers over the jsonb
-/// envelopes returned by the RPCs.
+// Models for the earning features. Most are thin wrappers over the jsonb
+// envelopes returned by the RPCs.
 
 class DailyStatus {
   final bool claimedToday;
