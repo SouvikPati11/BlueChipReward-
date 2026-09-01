@@ -69,21 +69,53 @@ class ReferralStats {
   final int totalEarned;
   final List<ReferralEntry> recent;
 
+  /// Per-level breakdown (level, reward, count, earnings) from the server.
+  final List<ReferralLevel> levels;
+
   const ReferralStats({
     required this.referralCode,
     required this.totalReferrals,
     required this.totalEarned,
     required this.recent,
+    this.levels = const [],
   });
+
+  /// The direct (level-1) per-referral reward, for headline copy.
+  int get perReferralReward =>
+      levels.isNotEmpty ? levels.first.reward : 0;
+}
+
+class ReferralLevel {
+  final int level;
+  final int reward;
+  final int count;
+  final int earnings;
+
+  const ReferralLevel({
+    required this.level,
+    required this.reward,
+    required this.count,
+    required this.earnings,
+  });
+
+  factory ReferralLevel.fromJson(Map<String, dynamic> j) => ReferralLevel(
+        level: (j['level'] as num?)?.toInt() ?? 1,
+        reward: (j['reward'] as num?)?.toInt() ?? 0,
+        count: (j['count'] as num?)?.toInt() ?? 0,
+        earnings: (j['earnings'] as num?)?.toInt() ?? 0,
+      );
 }
 
 class ReferralEntry {
   final int reward;
+  final int level;
   final DateTime createdAt;
-  const ReferralEntry({required this.reward, required this.createdAt});
+  const ReferralEntry(
+      {required this.reward, this.level = 1, required this.createdAt});
 
   factory ReferralEntry.fromJson(Map<String, dynamic> j) => ReferralEntry(
         reward: (j['reward_amount'] as num?)?.toInt() ?? 0,
+        level: (j['level'] as num?)?.toInt() ?? 1,
         createdAt: DateTime.parse(j['created_at'] as String),
       );
 }

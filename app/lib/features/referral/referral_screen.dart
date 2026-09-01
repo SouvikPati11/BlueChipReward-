@@ -8,6 +8,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/state_views.dart';
+import '../../models/wallet_models.dart';
 import '../../providers/data_providers.dart';
 import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
@@ -47,7 +48,9 @@ class ReferralScreen extends ConsumerWidget {
                               fontWeight: FontWeight.w800)),
                       const SizedBox(height: 6),
                       Text(
-                          'Earn BCP for every friend who joins with your code.',
+                          stats.perReferralReward > 0
+                              ? 'Earn ${stats.perReferralReward} BCP for every friend who joins with your code.'
+                              : 'Earn BCP for every friend who joins with your code.',
                           textAlign: TextAlign.center,
                           style:
                               TextStyle(color: Colors.white.withValues(alpha: .9))),
@@ -59,17 +62,21 @@ class ReferralScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                         child: _StatCard(
-                            label: 'Referrals',
+                            label: 'Total referrals',
                             value: '${stats.totalReferrals}',
                             icon: Icons.person_add_rounded)),
                     const SizedBox(width: 12),
                     Expanded(
                         child: _StatCard(
-                            label: 'BCP earned',
+                            label: 'Total BCP earned',
                             value: Fmt.points(stats.totalEarned),
                             icon: Icons.savings_rounded)),
                   ],
                 ),
+                if (stats.levels.length > 1) ...[
+                  const SizedBox(height: 16),
+                  _LevelBreakdown(levels: stats.levels),
+                ],
                 const SizedBox(height: 16),
                 SectionCard(
                   child: Column(
@@ -142,8 +149,9 @@ class ReferralScreen extends ConsumerWidget {
                         child: Icon(Icons.person_rounded,
                             color: AppColors.success),
                       ),
-                      title: const Text('Referred user',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
+                      title: Text(
+                          r.level > 1 ? 'Level ${r.level} referral' : 'Referred user',
+                          style: const TextStyle(fontWeight: FontWeight.w700)),
                       subtitle: Text(Fmt.timeAgo(r.createdAt)),
                       trailing: Text('+${r.reward}',
                           style: const TextStyle(
@@ -154,6 +162,63 @@ class ReferralScreen extends ConsumerWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _LevelBreakdown extends StatelessWidget {
+  final List<ReferralLevel> levels;
+  const _LevelBreakdown({required this.levels});
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Your referral network',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          Text('You earn on multiple levels of referrals.',
+              style: TextStyle(color: context.cx.textSecondary, fontSize: 13)),
+          const SizedBox(height: 14),
+          for (final l in levels) ...[
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: AppColors.primary.withValues(alpha: .12),
+                  child: Text('L${l.level}',
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Level ${l.level} · ${l.reward} BCP each',
+                          style:
+                              const TextStyle(fontWeight: FontWeight.w700)),
+                      Text('${l.count} referral${l.count == 1 ? '' : 's'}',
+                          style: TextStyle(
+                              color: context.cx.textSecondary, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                Text('+${Fmt.points(l.earnings)}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.success)),
+              ],
+            ),
+            if (l.level != levels.last.level)
+              Divider(height: 20, color: context.cx.border),
+          ],
+        ],
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/app_config.dart';
 import '../../core/error/failure.dart';
 import '../../core/supabase/supabase_client.dart';
+import '../../core/utils/device_id.dart';
 
 class AuthRepository {
   GoTrueClient get _auth => Db.auth;
@@ -18,15 +19,18 @@ class AuthRepository {
     String? referralCode,
   }) async {
     try {
+      final deviceId = await DeviceId.get();
       await _auth.signUp(
         email: email,
         password: password,
         data: {
           'full_name': fullName,
+          'device_id': deviceId,
           if (referralCode != null && referralCode.trim().isNotEmpty)
             'referral_code': referralCode.trim().toUpperCase(),
         },
       );
+      await _registerDevice();
     } catch (e) {
       throw AppFailure.from(e);
     }
@@ -36,8 +40,19 @@ class AuthRepository {
       {required String email, required String password}) async {
     try {
       await _auth.signInWithPassword(email: email, password: password);
+      await _registerDevice();
     } catch (e) {
       throw AppFailure.from(e);
+    }
+  }
+
+  /// Best-effort: record this install's device id for same-device fraud checks.
+  Future<void> _registerDevice() async {
+    try {
+      final deviceId = await DeviceId.get();
+      await Db.client.rpc('register_device', params: {'p_device_id': deviceId});
+    } catch (_) {
+      // non-fatal
     }
   }
 
@@ -64,6 +79,9 @@ class AuthRepository {
         idToken: idToken,
         accessToken: accessToken,
       );
+      // Record device before applying a referral so the same-device abuse
+      // check has the signal available.
+      await _registerDevice();
       if (referralCode != null && referralCode.trim().isNotEmpty) {
         try {
           await Db.client.rpc('apply_referral_code',

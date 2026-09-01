@@ -68,20 +68,46 @@ class WalletRepository {
   Future<ReferralStats> fetchReferralStats(String referralCode) async {
     try {
       final uid = Db.uid!;
+      // Server-authoritative level-wise overview (counts, earnings, per-level
+      // reward config). Falls back gracefully if the RPC is unavailable.
+      List<ReferralLevel> levels = const [];
+      int totalReferrals = 0;
+      int totalEarned = 0;
+      String code = referralCode;
+      try {
+        final overview = await Db.client.rpc('referral_overview');
+        final map = (overview as Map).cast<String, dynamic>();
+        code = (map['code'] as String?) ?? referralCode;
+        totalReferrals = (map['total_referrals'] as num?)?.toInt() ?? 0;
+        totalEarned = (map['total_earnings'] as num?)?.toInt() ?? 0;
+        levels = ((map['per_level'] as List?) ?? const [])
+            .map((e) => ReferralLevel.fromJson((e as Map).cast<String, dynamic>()))
+            .toList();
+      } catch (_) {
+        // RPC not deployed yet — the recent-list aggregate below still works.
+      }
+
       final rows = await Db.client
           .from('referrals')
-          .select('reward_amount, created_at')
+          .select('reward_amount, level, created_at')
           .eq('referrer_id', uid)
           .order('created_at', ascending: false);
       final list = (rows as List)
           .map((e) => ReferralEntry.fromJson(e as Map<String, dynamic>))
           .toList();
-      final total = list.fold<int>(0, (s, e) => s + e.reward);
+
+      // Fall back to client aggregation if the RPC was unavailable.
+      if (levels.isEmpty) {
+        totalReferrals = list.length;
+        totalEarned = list.fold<int>(0, (s, e) => s + e.reward);
+      }
+
       return ReferralStats(
-        referralCode: referralCode,
-        totalReferrals: list.length,
-        totalEarned: total,
+        referralCode: code,
+        totalReferrals: totalReferrals,
+        totalEarned: totalEarned,
         recent: list.take(20).toList(),
+        levels: levels,
       );
     } catch (e) {
       throw AppFailure.from(e);
