@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/banner_ad_bar.dart';
 import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../models/earn_models.dart';
@@ -57,6 +58,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Tasks')),
+      bottomNavigationBar: const BannerAdBar(),
       body: SafeArea(
         top: false,
         child: tasksAsync.when(

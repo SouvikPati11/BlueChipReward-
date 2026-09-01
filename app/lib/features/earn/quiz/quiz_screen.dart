@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/ad_gate.dart';
+import '../../../core/widgets/banner_ad_bar.dart';
 import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../models/earn_models.dart';
@@ -26,9 +28,11 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
       final answers = _answers.entries
           .map((e) => {'question_id': e.key, 'answer_index': e.value})
           .toList();
+      // Rewarded-ad gated submission.
+      final nonce = await runRewardedGate(ref, 'quiz');
       final res = await ref
           .read(earnRepositoryProvider)
-          .submitQuiz(quiz.quizId!, answers);
+          .submitQuiz(quiz.quizId!, answers, nonce: nonce);
       ref.invalidate(quizProvider);
       ref.invalidate(walletProvider);
       ref.invalidate(transactionsProvider);
@@ -83,6 +87,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Daily Quiz')),
+      bottomNavigationBar: const BannerAdBar(),
       body: SafeArea(
         top: false,
         child: quizAsync.when(

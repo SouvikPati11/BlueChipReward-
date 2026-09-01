@@ -57,6 +57,11 @@ class AppConfig {
         const String.fromEnvironment('ADMOB_REWARDED_AD_UNIT'),
       );
 
+  static String get admobBannerAdUnit => _get(
+        'ADMOB_BANNER_AD_UNIT',
+        const String.fromEnvironment('ADMOB_BANNER_AD_UNIT'),
+      );
+
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty &&
       !supabaseUrl.contains('YOUR-PROJECT') &&

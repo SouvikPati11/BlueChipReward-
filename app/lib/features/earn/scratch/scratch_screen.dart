@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/ad_gate.dart';
+import '../../../core/widgets/banner_ad_bar.dart';
 import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../providers/data_providers.dart';
@@ -57,8 +59,11 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
     if (_cardId == null || _revealing) return;
     setState(() => _revealing = true);
     try {
-      final res =
-          await ref.read(earnRepositoryProvider).scratchReveal(_cardId!);
+      // Rewarded-ad gated reveal.
+      final nonce = await runRewardedGate(ref, 'scratch');
+      final res = await ref
+          .read(earnRepositoryProvider)
+          .scratchReveal(_cardId!, nonce: nonce);
       ref.invalidate(walletProvider);
       ref.invalidate(transactionsProvider);
       setState(() {
@@ -76,6 +81,7 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Scratch Card')),
+      bottomNavigationBar: const BannerAdBar(),
       body: SafeArea(
         top: false,
         child: _loading

@@ -22,7 +22,8 @@ class EarnRepository {
   Future<DailyStatus> dailyStatus() async =>
       DailyStatus.fromJson(await _rpc('daily_reward_status'));
 
-  Future<Map<String, dynamic>> claimDaily() => _rpc('claim_daily_reward');
+  Future<Map<String, dynamic>> claimDaily({String? nonce}) =>
+      _rpc('claim_daily_reward', {if (nonce != null) 'p_nonce': nonce});
 
   // ---- Mining --------------------------------------------------------------
   Future<MiningStatus> miningStatus() async =>
@@ -35,19 +36,40 @@ class EarnRepository {
   // ---- Scratch -------------------------------------------------------------
   Future<Map<String, dynamic>> scratchStatus() => _rpc('scratch_status');
 
-  Future<Map<String, dynamic>> scratchReveal(String cardId) =>
-      _rpc('scratch_reveal', {'p_card_id': cardId});
+  Future<Map<String, dynamic>> scratchReveal(String cardId, {String? nonce}) =>
+      _rpc('scratch_reveal',
+          {'p_card_id': cardId, if (nonce != null) 'p_nonce': nonce});
 
   // ---- Ads -----------------------------------------------------------------
-  Future<Map<String, dynamic>> rewardAd() => _rpc('reward_ad');
+  Future<Map<String, dynamic>> rewardAd(String nonce) =>
+      _rpc('reward_ad', {'p_nonce': nonce});
+
+  /// Ad funnel: begin an ad show → returns a server nonce that ties the funnel
+  /// events together and later authorises a gated reward.
+  Future<String> adBegin(String placement) async {
+    final res = await _rpc('ad_begin', {'p_placement': placement});
+    return res['nonce'] as String;
+  }
+
+  /// Advance the ad funnel state: 'impressed' or 'rewarded'.
+  Future<void> adMark(String nonce, String state) =>
+      _rpc('ad_mark', {'p_nonce': nonce, 'p_state': state});
 
   // ---- Quiz ----------------------------------------------------------------
   Future<DailyQuiz> quizToday() async =>
       DailyQuiz.fromJson(await _rpc('quiz_today'));
 
   Future<Map<String, dynamic>> submitQuiz(
-          String quizId, List<Map<String, dynamic>> answers) =>
-      _rpc('submit_quiz', {'p_quiz_id': quizId, 'p_answers': answers});
+          String quizId, List<Map<String, dynamic>> answers, {String? nonce}) =>
+      _rpc('submit_quiz', {
+        'p_quiz_id': quizId,
+        'p_answers': answers,
+        if (nonce != null) 'p_nonce': nonce,
+      });
+
+  // ---- Mining boost --------------------------------------------------------
+  Future<Map<String, dynamic>> boostMining({String? nonce}) =>
+      _rpc('boost_mining', {if (nonce != null) 'p_nonce': nonce});
 
   // ---- Tasks ---------------------------------------------------------------
   Future<List<TaskItem>> fetchTasks() async {

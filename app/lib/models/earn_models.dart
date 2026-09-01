@@ -25,10 +25,17 @@ class MiningStatus {
   final DateTime? startedAt;
   final DateTime? endsAt;
   final int ratePerHour;
+  final int baseRate;
   final int accrued;
   final int claimable;
   final bool completed;
   final int sessionHours;
+  final int boosts;
+  final int maxBoosts;
+  final int boostPct;
+  final bool canBoost;
+  final DateTime? nextBoostAt;
+  final bool boostRequiresAd;
 
   const MiningStatus({
     required this.active,
@@ -36,10 +43,17 @@ class MiningStatus {
     this.startedAt,
     this.endsAt,
     required this.ratePerHour,
+    this.baseRate = 0,
     this.accrued = 0,
     this.claimable = 0,
     this.completed = false,
-    this.sessionHours = 8,
+    this.sessionHours = 24,
+    this.boosts = 0,
+    this.maxBoosts = 3,
+    this.boostPct = 20,
+    this.canBoost = false,
+    this.nextBoostAt,
+    this.boostRequiresAd = true,
   });
 
   factory MiningStatus.fromJson(Map<String, dynamic> j) => MiningStatus(
@@ -51,10 +65,20 @@ class MiningStatus {
         endsAt:
             j['ends_at'] != null ? DateTime.parse(j['ends_at'] as String) : null,
         ratePerHour: (j['rate_per_hour'] as num?)?.toInt() ?? 0,
+        baseRate: (j['base_rate'] as num?)?.toInt() ??
+            (j['rate_per_hour'] as num?)?.toInt() ?? 0,
         accrued: (j['accrued'] as num?)?.toInt() ?? 0,
         claimable: (j['claimable'] as num?)?.toInt() ?? 0,
         completed: j['completed'] as bool? ?? false,
-        sessionHours: (j['session_hours'] as num?)?.toInt() ?? 8,
+        sessionHours: (j['session_hours'] as num?)?.toInt() ?? 24,
+        boosts: (j['boosts'] as num?)?.toInt() ?? 0,
+        maxBoosts: (j['max_boosts'] as num?)?.toInt() ?? 3,
+        boostPct: (j['boost_pct'] as num?)?.toInt() ?? 20,
+        canBoost: j['can_boost'] as bool? ?? false,
+        nextBoostAt: j['next_boost_at'] != null
+            ? DateTime.parse(j['next_boost_at'] as String)
+            : null,
+        boostRequiresAd: j['boost_requires_ad'] as bool? ?? true,
       );
 }
 

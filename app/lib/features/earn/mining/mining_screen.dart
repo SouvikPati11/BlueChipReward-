@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/ad_gate.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/banner_ad_bar.dart';
 import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../models/earn_models.dart';
@@ -62,6 +64,27 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
     }
   }
 
+  Future<void> _boost(MiningStatus s) async {
+    setState(() => _busy = true);
+    try {
+      String? nonce;
+      if (s.boostRequiresAd) {
+        nonce = await runRewardedGate(ref, 'mining');
+      }
+      final res =
+          await ref.read(earnRepositoryProvider).boostMining(nonce: nonce);
+      ref.invalidate(miningStatusProvider);
+      if (mounted) {
+        final rate = (res['rate_per_hour'] as num?)?.toInt() ?? s.ratePerHour;
+        showSnack(context, 'Boost applied! New rate: $rate BCP/hour.');
+      }
+    } catch (e) {
+      if (mounted) showSnack(context, '$e', error: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _claim() async {
     setState(() => _busy = true);
     try {
@@ -89,6 +112,7 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mining')),
+      bottomNavigationBar: const BannerAdBar(),
       body: SafeArea(
         top: false,
         child: statusAsync.when(
@@ -149,6 +173,14 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
                         ? 'Claim $claimable BCP'
                         : 'Nothing to claim yet'),
                   ),
+                  if (!s.completed) ...[
+                    const SizedBox(height: 16),
+                    _BoostCard(
+                      status: s,
+                      busy: _busy,
+                      onBoost: () => _boost(s),
+                    ),
+                  ],
                   if (s.completed) ...[
                     const SizedBox(height: 10),
                     OutlinedButton.icon(
@@ -206,6 +238,80 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
         const Spacer(),
         Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
       ],
+    );
+  }
+}
+
+class _BoostCard extends StatelessWidget {
+  final MiningStatus status;
+  final bool busy;
+  final VoidCallback onBoost;
+  const _BoostCard(
+      {required this.status, required this.busy, required this.onBoost});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = status;
+    final atMax = s.boosts >= s.maxBoosts;
+    final cooling = s.nextBoostAt != null &&
+        DateTime.now().toUtc().isBefore(s.nextBoostAt!.toUtc());
+    final cooldownLeft = cooling
+        ? s.nextBoostAt!.toUtc().difference(DateTime.now().toUtc())
+        : Duration.zero;
+
+    String label;
+    if (atMax) {
+      label = 'All ${s.maxBoosts} boosts used';
+    } else if (cooling) {
+      label = 'Boost in ${Fmt.duration(cooldownLeft)}';
+    } else {
+      label = s.boostRequiresAd
+          ? 'Watch ad to boost +${s.boostPct}%'
+          : 'Boost +${s.boostPct}%';
+    }
+
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.rocket_launch_rounded, color: AppColors.gold),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text('Boost your mining rate',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+              ),
+              Pill('${s.boosts}/${s.maxBoosts}', color: AppColors.gold),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+              'Each boost adds ${s.boostPct}% of your base rate (${s.baseRate} BCP/hour) for the rest of the session.',
+              style: TextStyle(color: context.cx.textSecondary, fontSize: 13)),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: (busy || atMax || cooling || !s.canBoost)
+                  ? null
+                  : onBoost,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.gold,
+                  minimumSize: const Size.fromHeight(46)),
+              icon: busy
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.rocket_launch_rounded),
+              label: Text(label),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/ad_gate.dart';
+import '../../../core/widgets/banner_ad_bar.dart';
 import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../providers/data_providers.dart';
@@ -21,7 +23,11 @@ class _DailyRewardScreenState extends ConsumerState<DailyRewardScreen> {
   Future<void> _claim() async {
     setState(() => _claiming = true);
     try {
-      final res = await ref.read(earnRepositoryProvider).claimDaily();
+      // Rewarded-ad gated: obtain a completed-ad nonce first (throws if the ad
+      // isn't watched to completion), then claim.
+      final nonce = await runRewardedGate(ref, 'daily');
+      final res =
+          await ref.read(earnRepositoryProvider).claimDaily(nonce: nonce);
       ref.invalidate(dailyStatusProvider);
       ref.invalidate(walletProvider);
       ref.invalidate(transactionsProvider);
@@ -43,6 +49,7 @@ class _DailyRewardScreenState extends ConsumerState<DailyRewardScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Daily Reward')),
+      bottomNavigationBar: const BannerAdBar(),
       body: SafeArea(
         top: false,
         child: statusAsync.when(
@@ -106,7 +113,7 @@ class _DailyRewardScreenState extends ConsumerState<DailyRewardScreen> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2.2, color: Colors.white))
                       : const Icon(Icons.card_giftcard_rounded),
-                  label: Text(claimed ? 'Claimed' : 'Claim reward'),
+                  label: Text(claimed ? 'Claimed' : 'Watch ad & claim'),
                 ),
                 const SizedBox(height: 12),
                 Text(

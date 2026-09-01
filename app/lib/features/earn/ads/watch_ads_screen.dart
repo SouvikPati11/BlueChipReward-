@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/rewarded_ad_service.dart';
+import '../../../core/utils/ad_gate.dart';
+import '../../../core/widgets/banner_ad_bar.dart';
 import '../../../core/widgets/common.dart';
 import '../../../providers/data_providers.dart';
 import '../../../providers/repositories.dart';
@@ -16,34 +17,23 @@ class WatchAdsScreen extends ConsumerStatefulWidget {
 }
 
 class _WatchAdsScreenState extends ConsumerState<WatchAdsScreen> {
-  final _ads = RewardedAdService();
   bool _busy = false;
 
   @override
   void initState() {
     super.initState();
-    _ads.preload();
-  }
-
-  @override
-  void dispose() {
-    _ads.dispose();
-    super.dispose();
+    // warm the shared rewarded ad
+    ref.read(rewardedAdServiceProvider).preload();
   }
 
   Future<void> _watch() async {
     setState(() => _busy = true);
     try {
-      final earned = await _ads.show();
-      if (!earned) {
-        if (mounted) {
-          showSnack(context, 'Ad not completed. Reward not granted.',
-              error: true);
-        }
-        return;
-      }
+      // A completed-ad nonce is mandatory for watch-ads (the reward exists only
+      // because an ad was watched). runRewardedGate throws if not completed.
+      final nonce = await runRewardedGate(ref, 'watch_ads');
       // Server decides the reward and enforces limits.
-      final res = await ref.read(earnRepositoryProvider).rewardAd();
+      final res = await ref.read(earnRepositoryProvider).rewardAd(nonce);
       ref.invalidate(walletProvider);
       ref.invalidate(transactionsProvider);
       if (mounted) {
@@ -61,6 +51,7 @@ class _WatchAdsScreenState extends ConsumerState<WatchAdsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Watch Ads')),
+      bottomNavigationBar: const BannerAdBar(),
       body: SafeArea(
         top: false,
         child: ListView(

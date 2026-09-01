@@ -39,11 +39,14 @@ class RewardedAdService {
     return completer.future;
   }
 
-  /// Shows the ad. Returns true if the user earned the reward. The SSV callback
-  /// Rewarding is authorised server-side by reward_ad(); the optional AdMob SSV
-  /// callback can additionally verify completion (configure it in the AdMob
-  /// console with the signed-in user's id as custom data).
-  Future<bool> show() async {
+  /// True if a rewarded ad is loaded and ready to show right now.
+  bool get isReady => _ad != null;
+
+  /// Shows the ad. Returns true if the user earned the reward. The reward is
+  /// authorised server-side (reward_ad / gated RPCs); this only reports the
+  /// AdMob lifecycle. [onImpression] fires when the ad is shown, [onEarned]
+  /// when AdMob reports the reward callback.
+  Future<bool> show({void Function()? onImpression, void Function()? onEarned}) async {
     if (_ad == null) await preload();
     final ad = _ad;
     if (ad == null) return false;
@@ -52,6 +55,9 @@ class RewardedAdService {
     var earned = false;
 
     ad.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (ad) {
+        onImpression?.call();
+      },
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
         _ad = null;
@@ -67,6 +73,7 @@ class RewardedAdService {
 
     ad.show(onUserEarnedReward: (ad, reward) {
       earned = true;
+      onEarned?.call();
     });
 
     return completer.future;
