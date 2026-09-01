@@ -286,6 +286,142 @@ class AdminRepository {
     }
   }
 
+  // ---- Analytics (server-side filtered) ------------------------------------
+  Future<Map<String, dynamic>> analytics(
+      {DateTime? from, DateTime? to}) async {
+    try {
+      final res = await Db.client.rpc('admin_analytics', params: {
+        'p_from': from?.toUtc().toIso8601String(),
+        'p_to': to?.toUtc().toIso8601String(),
+      });
+      return (res as Map).cast<String, dynamic>();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> withdrawalsDetailed(String status) async {
+    try {
+      final res = await Db.client
+          .rpc('admin_withdrawals', params: {'p_status': status});
+      return (res as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  // ---- Referral fraud reviews ----------------------------------------------
+  Future<List<Map<String, dynamic>>> referralReviews(String status) async {
+    try {
+      final res = await Db.client
+          .rpc('admin_referral_reviews', params: {'p_status': status});
+      return (res as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> resolveReferralReview(String id, bool approve) async {
+    try {
+      await Db.client.rpc('admin_resolve_referral_review',
+          params: {'p_id': id, 'p_approve': approve});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  // ---- Invite milestone claims ---------------------------------------------
+  Future<List<Map<String, dynamic>>> inviteClaims(String status) async {
+    try {
+      final res = await Db.client
+          .rpc('admin_invite_claims', params: {'p_status': status});
+      return (res as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> resolveInviteClaim(String id, bool approve) async {
+    try {
+      await Db.client.rpc('admin_resolve_invite_claim',
+          params: {'p_claim_id': id, 'p_approve': approve});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  // ---- Invite milestone definitions ----------------------------------------
+  Future<List<Map<String, dynamic>>> inviteMilestones() async {
+    try {
+      final rows = await Db.client
+          .from('invite_milestones')
+          .select()
+          .order('position');
+      return (rows as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> saveInviteMilestone(Map<String, dynamic> m) async {
+    try {
+      await Db.client.rpc('admin_save_invite_milestone', params: {
+        'p_id': m['id'],
+        'p_threshold': m['threshold'],
+        'p_reward': m['reward'],
+        'p_auto_verify': m['auto_verify'],
+        'p_active': m['active'],
+        'p_position': m['position'],
+      });
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> deleteInviteMilestone(String id) async {
+    try {
+      await Db.client
+          .rpc('admin_delete_invite_milestone', params: {'p_id': id});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  // ---- Configurable links --------------------------------------------------
+  Future<List<Map<String, dynamic>>> appLinks() async {
+    try {
+      final res = await Db.client.rpc('admin_app_links');
+      return (res as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> saveAppLink(Map<String, dynamic> l) async {
+    try {
+      await Db.client.rpc('admin_save_app_link', params: {
+        'p_id': l['id'],
+        'p_key': l['key'],
+        'p_label': l['label'],
+        'p_url': l['url'],
+        'p_icon': l['icon'],
+        'p_external': l['external'],
+        'p_position': l['position'],
+        'p_active': l['active'],
+      });
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> deleteAppLink(String id) async {
+    try {
+      await Db.client.rpc('admin_delete_app_link', params: {'p_id': id});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
   // ---- User detail ---------------------------------------------------------
   Future<List<Map<String, dynamic>>> userTransactions(String userId) async {
     try {

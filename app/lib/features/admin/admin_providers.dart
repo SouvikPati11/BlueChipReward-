@@ -52,3 +52,47 @@ final adminAuditProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
   return ref.watch(adminRepositoryProvider).auditLogs();
 });
+
+/// Analytics date range for the dashboard (server-side filtered).
+class AnalyticsRange {
+  final DateTime? from;
+  final DateTime? to;
+  final String label;
+  const AnalyticsRange(this.label, this.from, this.to);
+}
+
+final adminAnalyticsRangeProvider =
+    StateProvider<AnalyticsRange>((ref) => allTimeRange());
+
+AnalyticsRange allTimeRange() => const AnalyticsRange('All time', null, null);
+
+final adminAnalyticsProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) {
+  final r = ref.watch(adminAnalyticsRangeProvider);
+  return ref.watch(adminRepositoryProvider).analytics(from: r.from, to: r.to);
+});
+
+final adminWithdrawalsDetailedProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, status) {
+  return ref.watch(adminRepositoryProvider).withdrawalsDetailed(status);
+});
+
+final adminReferralReviewsProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, status) {
+  return ref.watch(adminRepositoryProvider).referralReviews(status);
+});
+
+final adminInviteClaimsProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, status) {
+  return ref.watch(adminRepositoryProvider).inviteClaims(status);
+});
+
+final adminInviteMilestonesProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(adminRepositoryProvider).inviteMilestones();
+});
+
+final adminAppLinksProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(adminRepositoryProvider).appLinks();
+});
