@@ -28,7 +28,7 @@ class BalanceHero extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(.28),
+            color: AppColors.primary.withValues(alpha: .28),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -40,7 +40,7 @@ class BalanceHero extends StatelessWidget {
           Row(
             children: [
               Text('Your ${K.currency} balance',
-                  style: TextStyle(color: Colors.white.withOpacity(.85))),
+                  style: TextStyle(color: Colors.white.withValues(alpha: .85))),
               const Spacer(),
               const Icon(Icons.verified_rounded,
                   color: Colors.white, size: 18),
@@ -64,7 +64,7 @@ class BalanceHero extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(K.currency,
                     style: TextStyle(
-                        color: Colors.white.withOpacity(.8),
+                        color: Colors.white.withValues(alpha: .8),
                         fontWeight: FontWeight.w700)),
               ),
             ],
@@ -76,12 +76,12 @@ class BalanceHero extends StatelessWidget {
               Container(
                   width: 1,
                   height: 30,
-                  color: Colors.white.withOpacity(.2)),
+                  color: Colors.white.withValues(alpha: .2)),
               _mini('Pending', wallet.pendingWithdrawal),
               Container(
                   width: 1,
                   height: 30,
-                  color: Colors.white.withOpacity(.2)),
+                  color: Colors.white.withValues(alpha: .2)),
               _mini('Withdrawn', wallet.totalWithdrawn),
             ],
           ),
@@ -117,7 +117,7 @@ class BalanceHero extends StatelessWidget {
           const SizedBox(height: 2),
           Text(label,
               style: TextStyle(
-                  color: Colors.white.withOpacity(.75), fontSize: 12)),
+                  color: Colors.white.withValues(alpha: .75), fontSize: 12)),
         ],
       ),
     );
@@ -126,7 +126,7 @@ class BalanceHero extends StatelessWidget {
   Widget _action(
       BuildContext context, IconData icon, String label, String route) {
     return Material(
-      color: Colors.white.withOpacity(.16),
+      color: Colors.white.withValues(alpha: .16),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),

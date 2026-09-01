@@ -79,7 +79,7 @@ class _TopBar extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 22,
-          backgroundColor: AppColors.primary.withOpacity(.12),
+          backgroundColor: AppColors.primary.withValues(alpha: .12),
           backgroundImage: (profile?.avatarUrl != null)
               ? NetworkImage(profile!.avatarUrl!)
               : null,
@@ -146,7 +146,7 @@ class _DailyBanner extends StatelessWidget {
                         streak > 0
                             ? 'Keep your $streak-day streak going'
                             : 'Claim your reward now',
-                        style: TextStyle(color: Colors.white.withOpacity(.9))),
+                        style: TextStyle(color: Colors.white.withValues(alpha: .9))),
                   ],
                 ),
               ),
@@ -195,7 +195,7 @@ class _EarnGrid extends StatelessWidget {
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: m.color.withOpacity(.12),
+                      color: m.color.withValues(alpha: .12),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(m.icon, color: m.color, size: 24),
@@ -242,7 +242,7 @@ class _RecentActivity extends ConsumerWidget {
                   backgroundColor: (tx.isCredit
                           ? AppColors.success
                           : AppColors.danger)
-                      .withOpacity(.12),
+                      .withValues(alpha: .12),
                   child: Icon(
                       tx.isCredit
                           ? Icons.arrow_downward_rounded

@@ -131,7 +131,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                                     fontWeight: FontWeight.w800)),
                             Text('Up to ${quiz.reward} BCP',
                                 style: TextStyle(
-                                    color: Colors.white.withOpacity(.9))),
+                                    color: Colors.white.withValues(alpha: .9))),
                           ],
                         ),
                       ),
@@ -203,7 +203,7 @@ class _QuestionCard extends StatelessWidget {
                       horizontal: 14, vertical: 14),
                   decoration: BoxDecoration(
                     color: selected == i
-                        ? AppColors.primary.withOpacity(.1)
+                        ? AppColors.primary.withValues(alpha: .1)
                         : context.cx.surfaceAlt,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(

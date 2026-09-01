@@ -79,7 +79,7 @@ class _WatchAdsScreenState extends ConsumerState<WatchAdsScreen> {
                     width: 90,
                     height: 90,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(.18),
+                      color: Colors.white.withValues(alpha: .18),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.play_circle_fill_rounded,
@@ -94,7 +94,7 @@ class _WatchAdsScreenState extends ConsumerState<WatchAdsScreen> {
                   const SizedBox(height: 6),
                   Text('Watch a short video to earn instant BCP.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white.withOpacity(.9))),
+                      style: TextStyle(color: Colors.white.withValues(alpha: .9))),
                 ],
               ),
             ),
@@ -131,18 +131,18 @@ class _RulesCard extends StatelessWidget {
           const Text('How it works',
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
           const SizedBox(height: 12),
-          _rule(Icons.verified_user_rounded,
+          _rule(context, Icons.verified_user_rounded,
               'Rewards are granted only after a completed ad — verified on the server.'),
-          _rule(Icons.timelapse_rounded,
+          _rule(context, Icons.timelapse_rounded,
               'A short cooldown applies between ads to prevent abuse.'),
-          _rule(Icons.today_rounded,
+          _rule(context, Icons.today_rounded,
               'There is a daily limit on rewarded ads.'),
         ],
       ),
     );
   }
 
-  Widget _rule(IconData icon, String text) {
+  Widget _rule(BuildContext context, IconData icon, String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(

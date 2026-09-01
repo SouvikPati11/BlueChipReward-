@@ -63,7 +63,7 @@ class _DailyRewardScreenState extends ConsumerState<DailyRewardScreen> {
                         width: 96,
                         height: 96,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(.16),
+                          color: Colors.white.withValues(alpha: .16),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -89,7 +89,7 @@ class _DailyRewardScreenState extends ConsumerState<DailyRewardScreen> {
                             : 'Claim now and build your streak.',
                         textAlign: TextAlign.center,
                         style:
-                            TextStyle(color: Colors.white.withOpacity(.85)),
+                            TextStyle(color: Colors.white.withValues(alpha: .85)),
                       ),
                     ],
                   ),

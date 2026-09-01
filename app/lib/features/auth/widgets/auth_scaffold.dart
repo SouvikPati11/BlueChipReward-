@@ -41,7 +41,7 @@ class AuthScaffold extends StatelessWidget {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(.16),
+                          color: Colors.white.withValues(alpha: .16),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: const Icon(Icons.diamond_rounded,
@@ -63,7 +63,7 @@ class AuthScaffold extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(subtitle,
                         style: TextStyle(
-                            color: Colors.white.withOpacity(.85),
+                            color: Colors.white.withValues(alpha: .85),
                             fontSize: 15)),
                   ],
                 ),

@@ -270,7 +270,7 @@ class _MiningOrb extends StatelessWidget {
                   Text(active ? 'BCP mined' : 'Tap start below',
                       style: TextStyle(
                           color: active
-                              ? Colors.white.withOpacity(.9)
+                              ? Colors.white.withValues(alpha: .9)
                               : context.cx.textSecondary,
                           fontSize: 12)),
                 ],

@@ -174,7 +174,7 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                     ],
                     const SizedBox(height: 12),
                     SectionCard(
-                      color: AppColors.warning.withOpacity(.08),
+                      color: AppColors.warning.withValues(alpha: .08),
                       child: Row(
                         children: [
                           const Icon(Icons.info_outline_rounded,

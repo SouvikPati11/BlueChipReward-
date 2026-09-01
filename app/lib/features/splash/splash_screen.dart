@@ -39,7 +39,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(.15),
+                  color: Colors.white.withValues(alpha: .15),
                   borderRadius: BorderRadius.circular(28),
                 ),
                 child: const Icon(Icons.diamond_rounded,
@@ -53,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       fontWeight: FontWeight.w900)),
               const SizedBox(height: 8),
               Text('Earn. Play. Get rewarded.',
-                  style: TextStyle(color: Colors.white.withOpacity(.8))),
+                  style: TextStyle(color: Colors.white.withValues(alpha: .8))),
               const SizedBox(height: 40),
               const SizedBox(
                 width: 26,

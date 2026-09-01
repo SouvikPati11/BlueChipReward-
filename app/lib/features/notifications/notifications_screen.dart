@@ -64,7 +64,7 @@ class NotificationsScreen extends ConsumerWidget {
                   },
                   leading: CircleAvatar(
                     backgroundColor: AppColors.primary
-                        .withOpacity(n.read ? .06 : .14),
+                        .withValues(alpha: n.read ? .06 : .14),
                     child: Icon(_icon(n.type),
                         color: n.read
                             ? context.cx.textSecondary

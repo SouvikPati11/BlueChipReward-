@@ -30,7 +30,7 @@ class ProfileScreen extends ConsumerWidget {
                 children: [
                   CircleAvatar(
                     radius: 32,
-                    backgroundColor: AppColors.primary.withOpacity(.12),
+                    backgroundColor: AppColors.primary.withValues(alpha: .12),
                     backgroundImage: profileAsync.valueOrNull?.avatarUrl != null
                         ? NetworkImage(profileAsync.value!.avatarUrl!)
                         : null,
@@ -117,7 +117,7 @@ class ProfileScreen extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: highlight
-            ? AppColors.primary.withOpacity(.08)
+            ? AppColors.primary.withValues(alpha: .08)
             : context.cx.surface,
         borderRadius: BorderRadius.circular(16),
         child: ListTile(

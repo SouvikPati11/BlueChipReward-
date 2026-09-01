@@ -149,7 +149,7 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(.12),
+                color: Colors.black.withValues(alpha: .12),
                 blurRadius: 24,
                 offset: const Offset(0, 12)),
           ],

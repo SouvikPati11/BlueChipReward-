@@ -25,7 +25,7 @@ class ConfigErrorScreen extends StatelessWidget {
                       .headlineSmall
                       ?.copyWith(fontWeight: FontWeight.w800)),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'BlueChip Rewards needs your Supabase URL and anon key.\n\n'
                 'Set them in app/assets/config.env, or pass them at build time with '
                 '--dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...',

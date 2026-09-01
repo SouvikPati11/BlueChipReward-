@@ -29,7 +29,7 @@ class SectionCard extends StatelessWidget {
             : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.03),
+            color: Colors.black.withValues(alpha: .03),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -52,7 +52,7 @@ class Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(.12),
+        color: color.withValues(alpha: .12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(

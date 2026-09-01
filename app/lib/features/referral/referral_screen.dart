@@ -50,7 +50,7 @@ class ReferralScreen extends ConsumerWidget {
                           'Earn BCP for every friend who joins with your code.',
                           textAlign: TextAlign.center,
                           style:
-                              TextStyle(color: Colors.white.withOpacity(.9))),
+                              TextStyle(color: Colors.white.withValues(alpha: .9))),
                     ],
                   ),
                 ),
@@ -75,7 +75,7 @@ class ReferralScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Your referral code',
+                      Text('Your referral code',
                           style: TextStyle(
                               color: context.cx.textSecondary, fontSize: 13)),
                       const SizedBox(height: 8),

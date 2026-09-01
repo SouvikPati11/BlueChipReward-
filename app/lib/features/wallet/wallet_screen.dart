@@ -83,7 +83,7 @@ class WalletScreen extends ConsumerWidget {
                             backgroundColor: (tx.isCredit
                                     ? AppColors.success
                                     : AppColors.danger)
-                                .withOpacity(.12),
+                                .withValues(alpha: .12),
                             child: Icon(
                                 tx.isCredit
                                     ? Icons.arrow_downward_rounded

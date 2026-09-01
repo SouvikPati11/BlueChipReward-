@@ -31,7 +31,7 @@ class AppShell extends StatelessWidget {
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           backgroundColor: context.cx.surface,
-          indicatorColor: AppColors.primary.withOpacity(.12),
+          indicatorColor: AppColors.primary.withValues(alpha: .12),
           labelTextStyle: WidgetStateProperty.all(
             const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),

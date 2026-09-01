@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
 import '../../core/widgets/common.dart';
 import 'earn_methods.dart';
 import 'package:bluechip_rewards/core/theme/app_palette.dart';
@@ -48,7 +47,7 @@ class _EarnRow extends StatelessWidget {
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                color: method.color.withOpacity(.12),
+                color: method.color.withValues(alpha: .12),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(method.icon, color: method.color, size: 28),
