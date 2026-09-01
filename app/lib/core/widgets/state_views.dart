@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 /// Standard loading / error / empty views so every screen handles all states

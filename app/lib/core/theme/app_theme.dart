@@ -98,7 +98,7 @@ class AppTheme {
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       dividerTheme: DividerThemeData(color: p.border, thickness: 1),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: p.surface,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
