@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,32 +10,39 @@ import 'core/config/app_config.dart';
 import 'core/supabase/supabase_client.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  // Guard the whole startup so no async error during init can take the app down
+  // on launch — the worst case is a clear in-app message, never a crash.
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  await AppConfig.load();
+    // Framework errors are logged, not fatal.
+    FlutterError.onError = FlutterError.presentError;
 
-  // Supabase is required; if unconfigured we still boot so the app can show a
-  // clear configuration message instead of crashing.
-  var initError = false;
-  if (AppConfig.isConfigured) {
-    try {
-      await Db.init();
-    } catch (_) {
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
+    await AppConfig.load();
+
+    // Supabase is required; if it is unconfigured or fails to initialise we
+    // still boot and show a clear message instead of crashing.
+    var initError = false;
+    if (AppConfig.isConfigured) {
+      try {
+        await Db.init();
+      } catch (_) {
+        initError = true;
+      }
+    } else {
       initError = true;
     }
-  } else {
-    initError = true;
-  }
 
-  // AdMob — safe to initialise even without a real unit (test ads).
-  unawaitedInit();
+    runApp(ProviderScope(child: BlueChipApp(configError: initError)));
 
-  runApp(ProviderScope(
-    child: BlueChipApp(configError: initError),
-  ));
-}
-
-void unawaitedInit() {
-  MobileAds.instance.initialize();
+    // Ads are non-critical and initialised AFTER the first frame. A failure
+    // here (e.g. an AdMob misconfiguration) must never affect startup.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      MobileAds.instance.initialize().then((_) {}, onError: (_) {});
+    });
+  }, (error, stack) {
+    debugPrint('BlueChip Rewards uncaught startup error: $error');
+  });
 }

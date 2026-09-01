@@ -12,16 +12,23 @@ class AppConfig {
   static final Map<String, String> _env = {};
 
   static Future<void> load() async {
-    try {
-      final raw = await rootBundle.loadString('assets/.env');
-      for (final line in raw.split('\n')) {
-        final t = line.trim();
-        if (t.isEmpty || t.startsWith('#') || !t.contains('=')) continue;
-        final i = t.indexOf('=');
-        _env[t.substring(0, i).trim()] = t.substring(i + 1).trim();
+    // NOTE: the bundled config file must NOT be a dotfile — Flutter's asset
+    // bundler skips names starting with '.', which silently drops the file
+    // from release APKs. We read a normal filename, with the legacy dotfile as
+    // a fallback for older builds.
+    for (final path in const ['assets/config.env', 'assets/.env']) {
+      try {
+        final raw = await rootBundle.loadString(path);
+        for (final line in raw.split('\n')) {
+          final t = line.trim();
+          if (t.isEmpty || t.startsWith('#') || !t.contains('=')) continue;
+          final i = t.indexOf('=');
+          _env[t.substring(0, i).trim()] = t.substring(i + 1).trim();
+        }
+        if (_env.isNotEmpty) return; // loaded successfully
+      } catch (_) {
+        // try the next candidate
       }
-    } catch (_) {
-      // asset missing — rely on dart-define only
     }
   }
 

@@ -21,9 +21,18 @@ MANIFEST = os.path.join(ANDROID, "app", "src", "main", "AndroidManifest.xml")
 APP_GRADLE_GROOVY = os.path.join(ANDROID, "app", "build.gradle")
 APP_GRADLE_KTS = os.path.join(ANDROID, "app", "build.gradle.kts")
 
-ADMOB_APP_ID = os.environ.get(
-    "ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713"
-)
+# Google's public test AdMob *app* id. A valid app id looks like
+# "ca-app-pub-################~##########" (note the '~'). Passing an ad *unit*
+# id (which uses '/') or any malformed value here makes the AdMob SDK crash the
+# app natively at process start, so we validate and fall back to the test id.
+TEST_APP_ID = "ca-app-pub-3940256099942544~3347511713"
+_raw_app_id = os.environ.get("ADMOB_APP_ID", "").strip()
+if re.fullmatch(r"ca-app-pub-\d{10,}~\d{6,}", _raw_app_id):
+    ADMOB_APP_ID = _raw_app_id
+    _APP_ID_SOURCE = "provided ADMOB_APP_ID"
+else:
+    ADMOB_APP_ID = TEST_APP_ID
+    _APP_ID_SOURCE = "test app id (ADMOB_APP_ID unset or invalid)"
 MIN_SDK = "23"
 
 
@@ -50,9 +59,16 @@ def patch_manifest():
         # insert right after the opening <application ...> tag
         xml = re.sub(r"(<application\b[^>]*>)", r"\1\n" + meta, xml, count=1)
 
+    # Safety net: guarantee the AdMob app-id meta-data is present and valid.
+    if "com.google.android.gms.ads.APPLICATION_ID" not in xml:
+        raise SystemExit(
+            "FATAL: failed to inject AdMob APPLICATION_ID into AndroidManifest; "
+            "the app would crash at startup. Aborting the build."
+        )
+
     with open(MANIFEST, "w", encoding="utf-8") as f:
         f.write(xml)
-    print("patched AndroidManifest.xml")
+    print(f"patched AndroidManifest.xml (AdMob app id: {_APP_ID_SOURCE})")
 
 
 def patch_gradle():
