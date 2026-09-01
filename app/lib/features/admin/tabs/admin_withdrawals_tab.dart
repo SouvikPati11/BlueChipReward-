@@ -7,6 +7,7 @@ import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../providers/repositories.dart';
 import '../admin_providers.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class AdminWithdrawalsTab extends ConsumerWidget {
   const AdminWithdrawalsTab({super.key});
@@ -89,7 +90,7 @@ class AdminWithdrawalsTab extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text('${w.methodKey.toUpperCase()} • ${Fmt.dateTime(w.createdAt)}',
-                      style: TextStyle(color: AppColors.textSecondary)),
+                      style: TextStyle(color: context.cx.textSecondary)),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,

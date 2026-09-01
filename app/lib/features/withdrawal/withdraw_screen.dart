@@ -10,6 +10,7 @@ import '../../core/widgets/state_views.dart';
 import '../../models/wallet_models.dart';
 import '../../providers/data_providers.dart';
 import '../../providers/repositories.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class WithdrawScreen extends ConsumerStatefulWidget {
   const WithdrawScreen({super.key});
@@ -94,7 +95,7 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                   padding: const EdgeInsets.all(16),
                   children: [
                     SectionCard(
-                      color: AppColors.surfaceAlt,
+                      color: context.cx.surfaceAlt,
                       child: Row(
                         children: [
                           const Icon(Icons.account_balance_wallet_rounded,
@@ -147,7 +148,7 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                             side: BorderSide(
                                 color: _method == m
                                     ? AppColors.primary
-                                    : AppColors.border),
+                                    : context.cx.border),
                           ),
                         )),
                     if (_method != null) ...[
@@ -183,7 +184,7 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                             child: Text(
                               'Withdrawals are reviewed manually by our team. Your balance is held while the request is pending.',
                               style: TextStyle(
-                                  color: AppColors.textSecondary,
+                                  color: context.cx.textSecondary,
                                   fontSize: 13),
                             ),
                           ),

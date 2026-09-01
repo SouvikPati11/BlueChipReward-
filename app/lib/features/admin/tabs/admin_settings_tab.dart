@@ -8,6 +8,7 @@ import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../providers/repositories.dart';
 import '../admin_providers.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class AdminSettingsTab extends ConsumerWidget {
   const AdminSettingsTab({super.key});
@@ -28,7 +29,7 @@ class AdminSettingsTab extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Text(desc,
                     style: TextStyle(
-                        color: AppColors.textSecondary, fontSize: 13)),
+                        color: context.cx.textSecondary, fontSize: 13)),
               ),
             TextField(
               controller: ctrl,
@@ -130,7 +131,7 @@ class AdminSettingsTab extends ConsumerWidget {
                     style: const TextStyle(fontWeight: FontWeight.w800)),
                 subtitle: Text(
                   '${s['description'] ?? ''}\n${jsonEncode(s['value'])}',
-                  style: TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: context.cx.textSecondary),
                 ),
                 isThreeLine: true,
                 trailing: const Icon(Icons.edit_rounded),

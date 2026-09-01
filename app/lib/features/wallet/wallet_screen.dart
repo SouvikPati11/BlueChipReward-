@@ -7,6 +7,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/state_views.dart';
 import '../../providers/data_providers.dart';
 import '../home/widgets/balance_hero.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class WalletScreen extends ConsumerWidget {
   const WalletScreen({super.key});
@@ -106,9 +107,9 @@ class WalletScreen extends ConsumerWidget {
                                           ? AppColors.success
                                           : AppColors.danger)),
                               Text('bal ${Fmt.points(tx.balanceAfter)}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 11,
-                                      color: AppColors.textSecondary)),
+                                      color: context.cx.textSecondary)),
                             ],
                           ),
                         ),

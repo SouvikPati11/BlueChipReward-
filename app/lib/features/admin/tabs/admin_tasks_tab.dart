@@ -6,6 +6,7 @@ import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../providers/repositories.dart';
 import '../admin_providers.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class AdminTasksTab extends ConsumerWidget {
   const AdminTasksTab({super.key});
@@ -56,7 +57,7 @@ class AdminTasksTab extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text('User: ${c['user_id']}',
                       style: TextStyle(
-                          color: AppColors.textSecondary, fontSize: 12)),
+                          color: context.cx.textSecondary, fontSize: 12)),
                   const SizedBox(height: 12),
                   Row(
                     children: [

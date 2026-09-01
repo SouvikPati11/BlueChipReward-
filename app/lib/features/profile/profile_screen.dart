@@ -7,6 +7,7 @@ import '../../core/widgets/common.dart';
 import '../../providers/auth_providers.dart';
 import '../../providers/data_providers.dart';
 import '../../providers/repositories.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -51,7 +52,7 @@ class ProfileScreen extends ConsumerWidget {
                                 fontSize: 18, fontWeight: FontWeight.w800)),
                         Text(profileAsync.valueOrNull?.email ?? '',
                             style:
-                                TextStyle(color: AppColors.textSecondary)),
+                                TextStyle(color: context.cx.textSecondary)),
                         const SizedBox(height: 6),
                         if (walletAsync.valueOrNull != null)
                           BcpAmount(walletAsync.value!.balance, size: 14),
@@ -99,9 +100,9 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Center(
-              child: Text('${DateTime.now().year} • BlueChip Rewards v1.0.0',
+              child: Text('${DateTime.now().year} • BlueChip Rewards v1.0.2',
                   style: TextStyle(
-                      color: AppColors.textSecondary, fontSize: 12)),
+                      color: context.cx.textSecondary, fontSize: 12)),
             ),
           ],
         ),
@@ -117,16 +118,16 @@ class ProfileScreen extends ConsumerWidget {
       child: Material(
         color: highlight
             ? AppColors.primary.withOpacity(.08)
-            : AppColors.surface,
+            : context.cx.surface,
         borderRadius: BorderRadius.circular(16),
         child: ListTile(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-                color: highlight ? AppColors.primary : AppColors.border),
+                color: highlight ? AppColors.primary : context.cx.border),
           ),
           leading: Icon(icon,
-              color: highlight ? AppColors.primary : AppColors.textPrimary),
+              color: highlight ? AppColors.primary : context.cx.textPrimary),
           title: Text(title,
               style: const TextStyle(fontWeight: FontWeight.w700)),
           trailing: const Icon(Icons.chevron_right_rounded),

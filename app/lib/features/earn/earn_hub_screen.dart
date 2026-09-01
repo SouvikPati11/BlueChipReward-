@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/common.dart';
 import 'earn_methods.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class EarnHubScreen extends StatelessWidget {
   const EarnHubScreen({super.key});
@@ -18,7 +19,7 @@ class EarnHubScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
             Text('Choose how you want to earn',
-                style: TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: context.cx.textSecondary)),
             const SizedBox(height: 16),
             for (final m in earnMethods) ...[
               _EarnRow(method: m),
@@ -62,12 +63,12 @@ class _EarnRow extends StatelessWidget {
                           fontSize: 16, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 2),
                   Text(method.subtitle,
-                      style: TextStyle(color: AppColors.textSecondary)),
+                      style: TextStyle(color: context.cx.textSecondary)),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded,
-                size: 16, color: AppColors.textSecondary),
+            Icon(Icons.arrow_forward_ios_rounded,
+                size: 16, color: context.cx.textSecondary),
           ],
         ),
       ),

@@ -7,6 +7,8 @@ import '../../core/widgets/common.dart';
 import '../../core/widgets/state_views.dart';
 import '../../providers/data_providers.dart';
 import '../../providers/repositories.dart';
+import '../../providers/theme_provider.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -99,19 +101,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+              const _Group('Appearance'),
+              SectionCard(
+                padding: const EdgeInsets.all(14),
+                child: _ThemePicker(
+                  mode: ref.watch(themeModeProvider),
+                  onChanged: (m) =>
+                      ref.read(themeModeProvider.notifier).setMode(m),
+                ),
+              ),
+              const SizedBox(height: 20),
               const _Group('About & support'),
               _link(Icons.help_outline_rounded, 'Help & support',
                   'mailto:support@bluechiprewards.app'),
               _link(Icons.description_outlined, 'Terms of Service',
-                  'https://bluechiprewards.app/terms'),
+                  'https://souvikpati11.github.io/BlueChipReward-/terms.html'),
               _link(Icons.privacy_tip_outlined, 'Privacy Policy',
-                  'https://bluechiprewards.app/privacy'),
+                  'https://souvikpati11.github.io/BlueChipReward-/privacy.html'),
               const SizedBox(height: 10),
               const _Group('App information'),
               const ListTile(
                 leading: Icon(Icons.info_outline_rounded),
                 title: Text('Version'),
-                trailing: Text('1.0.0'),
+                trailing: Text('1.0.2'),
               ),
             ],
           ),
@@ -122,13 +134,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _link(IconData icon, String title, String url) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.textPrimary),
+      leading: Icon(icon, color: context.cx.textPrimary),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
       trailing: const Icon(Icons.open_in_new_rounded, size: 18),
       onTap: () {
         final uri = Uri.tryParse(url);
         if (uri != null) launchUrl(uri, mode: LaunchMode.externalApplication);
       },
+    );
+  }
+}
+
+class _ThemePicker extends StatelessWidget {
+  final ThemeMode mode;
+  final ValueChanged<ThemeMode> onChanged;
+  const _ThemePicker({required this.mode, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<ThemeMode>(
+      segments: const [
+        ButtonSegment(
+            value: ThemeMode.system,
+            icon: Icon(Icons.brightness_auto_rounded),
+            label: Text('System')),
+        ButtonSegment(
+            value: ThemeMode.light,
+            icon: Icon(Icons.light_mode_rounded),
+            label: Text('Light')),
+        ButtonSegment(
+            value: ThemeMode.dark,
+            icon: Icon(Icons.dark_mode_rounded),
+            label: Text('Dark')),
+      ],
+      selected: {mode},
+      showSelectedIcon: false,
+      onSelectionChanged: (s) => onChanged(s.first),
     );
   }
 }
@@ -142,11 +183,11 @@ class _Group extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10, left: 4),
       child: Text(title.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
               letterSpacing: 1,
-              color: AppColors.textSecondary)),
+              color: context.cx.textSecondary)),
     );
   }
 }

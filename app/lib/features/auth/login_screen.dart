@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/common.dart';
 import '../../providers/repositories.dart';
 import 'widgets/auth_scaffold.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -121,7 +122,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text('or',
-                    style: TextStyle(color: AppColors.textSecondary)),
+                    style: TextStyle(color: context.cx.textSecondary)),
               ),
               const Expanded(child: Divider()),
             ]),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 /// Standard loading / error / empty views so every screen handles all states
 /// consistently.
@@ -17,7 +18,7 @@ class LoadingView extends StatelessWidget {
           const CircularProgressIndicator(),
           if (label != null) ...[
             const SizedBox(height: 16),
-            Text(label!, style: const TextStyle(color: AppColors.textSecondary)),
+            Text(label!, style: TextStyle(color: context.cx.textSecondary)),
           ],
         ],
       ),
@@ -38,8 +39,8 @@ class ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_rounded,
-                size: 56, color: AppColors.textSecondary),
+            Icon(Icons.cloud_off_rounded,
+                size: 56, color: context.cx.textSecondary),
             const SizedBox(height: 16),
             Text('Something went wrong',
                 style: Theme.of(context)
@@ -49,7 +50,7 @@ class ErrorView extends StatelessWidget {
             const SizedBox(height: 8),
             Text('$error',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: context.cx.textSecondary)),
             if (onRetry != null) ...[
               const SizedBox(height: 20),
               OutlinedButton.icon(
@@ -86,7 +87,7 @@ class EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 56, color: AppColors.textSecondary.withOpacity(.5)),
+            Icon(icon, size: 56, color: context.cx.textSecondary.withOpacity(.5)),
             const SizedBox(height: 16),
             Text(title,
                 style: Theme.of(context)
@@ -97,7 +98,7 @@ class EmptyView extends StatelessWidget {
               const SizedBox(height: 8),
               Text(subtitle!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textSecondary)),
+                  style: TextStyle(color: context.cx.textSecondary)),
             ],
             if (action != null) ...[const SizedBox(height: 20), action!],
           ],

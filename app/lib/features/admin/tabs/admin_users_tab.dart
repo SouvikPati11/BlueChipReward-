@@ -6,6 +6,7 @@ import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../providers/repositories.dart';
 import '../admin_providers.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class AdminUsersTab extends ConsumerStatefulWidget {
   const AdminUsersTab({super.key});
@@ -125,7 +126,7 @@ class _AdminUsersTabState extends ConsumerState<AdminUsersTab> {
                                           fontWeight: FontWeight.w800)),
                                   Text(u['email'] ?? '',
                                       style: TextStyle(
-                                          color: AppColors.textSecondary,
+                                          color: context.cx.textSecondary,
                                           fontSize: 12)),
                                 ],
                               ),

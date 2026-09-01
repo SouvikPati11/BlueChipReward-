@@ -6,6 +6,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../admin_providers.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class AdminDashboardTab extends ConsumerWidget {
   const AdminDashboardTab({super.key});
@@ -63,7 +64,7 @@ class AdminDashboardTab extends ConsumerWidget {
                       Text(c.label,
                           maxLines: 2,
                           style:
-                              TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                              TextStyle(color: context.cx.textSecondary, fontSize: 13)),
                     ],
                   ),
                 ),

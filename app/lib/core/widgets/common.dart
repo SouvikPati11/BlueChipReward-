@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 /// Small shared building blocks.
 
@@ -20,11 +21,11 @@ class SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: gradient == null ? (color ?? AppColors.surface) : null,
+        color: gradient == null ? (color ?? context.cx.surface) : null,
         gradient: gradient,
         borderRadius: BorderRadius.circular(20),
         border: gradient == null
-            ? Border.all(color: AppColors.border)
+            ? Border.all(color: context.cx.border)
             : null,
         boxShadow: [
           BoxShadow(
@@ -91,7 +92,7 @@ class BcpAmount extends StatelessWidget {
             style: TextStyle(
                 fontSize: size,
                 fontWeight: FontWeight.w800,
-                color: color ?? AppColors.textPrimary)),
+                color: color ?? context.cx.textPrimary)),
       ],
     );
   }
@@ -103,7 +104,7 @@ void showSnack(BuildContext context, String message, {bool error = false}) {
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(
       content: Text(message),
-      backgroundColor: error ? AppColors.danger : AppColors.textPrimary,
+      backgroundColor: error ? AppColors.danger : context.cx.textPrimary,
       duration: const Duration(seconds: 3),
     ));
 }

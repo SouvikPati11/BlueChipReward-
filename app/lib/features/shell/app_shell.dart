@@ -7,6 +7,7 @@ import '../home/home_screen.dart';
 import '../profile/profile_screen.dart';
 import '../referral/referral_screen.dart';
 import '../wallet/wallet_screen.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 /// Bottom-nav scaffold. The active tab is derived from the current route.
 class AppShell extends StatelessWidget {
@@ -29,7 +30,7 @@ class AppShell extends StatelessWidget {
       body: child,
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
-          backgroundColor: AppColors.surface,
+          backgroundColor: context.cx.surface,
           indicatorColor: AppColors.primary.withOpacity(.12),
           labelTextStyle: WidgetStateProperty.all(
             const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),

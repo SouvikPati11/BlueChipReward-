@@ -7,6 +7,7 @@ import '../../../core/widgets/state_views.dart';
 import '../../../models/earn_models.dart';
 import '../../../providers/data_providers.dart';
 import '../../../providers/repositories.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class QuizScreen extends ConsumerStatefulWidget {
   const QuizScreen({super.key});
@@ -203,12 +204,12 @@ class _QuestionCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: selected == i
                         ? AppColors.primary.withOpacity(.1)
-                        : AppColors.surfaceAlt,
+                        : context.cx.surfaceAlt,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                         color: selected == i
                             ? AppColors.primary
-                            : AppColors.border),
+                            : context.cx.border),
                   ),
                   child: Row(
                     children: [
@@ -218,7 +219,7 @@ class _QuestionCard extends StatelessWidget {
                               : Icons.radio_button_unchecked_rounded,
                           color: selected == i
                               ? AppColors.primary
-                              : AppColors.textSecondary,
+                              : context.cx.textSecondary,
                           size: 20),
                       const SizedBox(width: 12),
                       Expanded(child: Text(question.options[i])),

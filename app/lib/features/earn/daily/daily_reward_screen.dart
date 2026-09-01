@@ -6,6 +6,7 @@ import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../providers/data_providers.dart';
 import '../../../providers/repositories.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class DailyRewardScreen extends ConsumerStatefulWidget {
   const DailyRewardScreen({super.key});
@@ -112,7 +113,7 @@ class _DailyRewardScreenState extends ConsumerState<DailyRewardScreen> {
                   'Rewards grow with consecutive daily claims. Miss a day and the streak resets.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: AppColors.textSecondary, fontSize: 13),
+                      color: context.cx.textSecondary, fontSize: 13),
                 ),
               ],
             );
@@ -140,21 +141,21 @@ class _StreakRow extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: done ? AppColors.gold : AppColors.surfaceAlt,
+                color: done ? AppColors.gold : context.cx.surfaceAlt,
                 shape: BoxShape.circle,
                 border: Border.all(
-                    color: done ? AppColors.gold : AppColors.border),
+                    color: done ? AppColors.gold : context.cx.border),
               ),
               child: Icon(
                   done ? Icons.check_rounded : Icons.circle_outlined,
                   size: 18,
-                  color: done ? Colors.white : AppColors.textSecondary),
+                  color: done ? Colors.white : context.cx.textSecondary),
             ),
             const SizedBox(height: 6),
             Text('D$day',
                 style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.textSecondary,
+                    color: context.cx.textSecondary,
                     fontWeight: FontWeight.w600)),
           ],
         );

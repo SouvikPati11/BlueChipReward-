@@ -6,6 +6,7 @@ import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../providers/data_providers.dart';
 import '../../../providers/repositories.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 /// The reward is decided server-side when the card is issued (scratch_status);
 /// revealing calls scratch_reveal which credits the ledger. The client cannot
@@ -91,7 +92,7 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
                               ? 'No scratch cards left today'
                               : 'Tap the card to reveal your prize',
                           style: TextStyle(
-                              color: AppColors.textSecondary, fontSize: 15),
+                              color: context.cx.textSecondary, fontSize: 15),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 24),
@@ -110,7 +111,7 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
                         if (_cardId != null && !_revealed)
                           Text('$_remaining more today',
                               style: TextStyle(
-                                  color: AppColors.textSecondary)),
+                                  color: context.cx.textSecondary)),
                         if (_revealed) ...[
                           const SizedBox(height: 12),
                           _remaining > 0

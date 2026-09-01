@@ -40,6 +40,11 @@ def patch_manifest():
     with open(MANIFEST, "r", encoding="utf-8") as f:
         xml = f.read()
 
+    # 0. Launcher/app display name must read "BlueChip Rewards" (flutter create
+    #    stamps the project name "bluechip_rewards").
+    xml = re.sub(r'android:label="[^"]*"',
+                 'android:label="BlueChip Rewards"', xml, count=1)
+
     # 1. INTERNET permission (before <application>)
     if "android.permission.INTERNET" not in xml:
         xml = xml.replace(
@@ -90,7 +95,31 @@ def patch_gradle():
     print(f"patched {os.path.basename(path)} (minSdk={MIN_SDK})")
 
 
+def install_icons():
+    """Overlay the generated launcher icons (android_res/) onto the Android
+    project's res/, replacing Flutter's default icon."""
+    import shutil
+    src = os.path.join(os.path.dirname(__file__), "..", "android_res")
+    dst = os.path.join(ANDROID, "app", "src", "main", "res")
+    if not os.path.isdir(src):
+        print("no android_res/ overlay found; keeping default icons", file=sys.stderr)
+        return
+    for root, _dirs, files in os.walk(src):
+        rel = os.path.relpath(root, src)
+        target_dir = os.path.join(dst, rel)
+        os.makedirs(target_dir, exist_ok=True)
+        for name in files:
+            shutil.copy2(os.path.join(root, name), os.path.join(target_dir, name))
+    # Remove Flutter's legacy round icon so it can't shadow the adaptive one.
+    for d in ("mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"):
+        rp = os.path.join(dst, f"mipmap-{d}", "ic_launcher_round.png")
+        if os.path.exists(rp):
+            os.remove(rp)
+    print("installed BlueChip Rewards launcher icons")
+
+
 if __name__ == "__main__":
     patch_manifest()
     patch_gradle()
+    install_icons()
     print("Android project patched for BlueChip Rewards.")

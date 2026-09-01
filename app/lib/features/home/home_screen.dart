@@ -10,6 +10,7 @@ import '../../models/profile.dart';
 import '../../providers/data_providers.dart';
 import '../earn/earn_methods.dart';
 import 'widgets/balance_hero.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -94,7 +95,7 @@ class _TopBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Welcome back',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                  style: TextStyle(color: context.cx.textSecondary, fontSize: 13)),
               Text(profile?.displayName ?? 'Loading…',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -107,8 +108,8 @@ class _TopBar extends StatelessWidget {
           onPressed: () => context.push('/notifications'),
           icon: const Icon(Icons.notifications_none_rounded),
           style: IconButton.styleFrom(
-              backgroundColor: AppColors.surface,
-              side: const BorderSide(color: AppColors.border)),
+              backgroundColor: context.cx.surface,
+              side: BorderSide(color: context.cx.border)),
         ),
       ],
     );

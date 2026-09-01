@@ -10,6 +10,7 @@ import '../../../core/widgets/state_views.dart';
 import '../../../models/earn_models.dart';
 import '../../../providers/data_providers.dart';
 import '../../../providers/repositories.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class MiningScreen extends ConsumerStatefulWidget {
   const MiningScreen({super.key});
@@ -186,7 +187,7 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
                   'Mining runs on the server — your BCP keeps accruing even when the app is closed. Come back anytime to claim.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: AppColors.textSecondary, fontSize: 13),
+                      color: context.cx.textSecondary, fontSize: 13),
                 ),
               ],
             );
@@ -201,7 +202,7 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
       children: [
         Icon(icon, color: AppColors.primary, size: 20),
         const SizedBox(width: 12),
-        Text(label, style: TextStyle(color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(color: context.cx.textSecondary)),
         const Spacer(),
         Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
       ],
@@ -236,7 +237,7 @@ class _MiningOrb extends StatelessWidget {
               child: CircularProgressIndicator(
                 value: active ? progress : 0,
                 strokeWidth: 12,
-                backgroundColor: AppColors.surfaceAlt,
+                backgroundColor: context.cx.surfaceAlt,
                 valueColor:
                     const AlwaysStoppedAnimation(AppColors.gold),
               ),
@@ -247,9 +248,9 @@ class _MiningOrb extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: active
                     ? AppColors.goldGradient
-                    : const LinearGradient(colors: [
-                        AppColors.surfaceAlt,
-                        AppColors.surfaceAlt
+                    : LinearGradient(colors: [
+                        context.cx.surfaceAlt,
+                        context.cx.surfaceAlt
                       ]),
                 shape: BoxShape.circle,
               ),
@@ -258,19 +259,19 @@ class _MiningOrb extends StatelessWidget {
                 children: [
                   Icon(Icons.bolt_rounded,
                       size: 40,
-                      color: active ? Colors.white : AppColors.textSecondary),
+                      color: active ? Colors.white : context.cx.textSecondary),
                   const SizedBox(height: 6),
                   Text(active ? '$claimable' : 'Idle',
                       style: TextStyle(
                           fontSize: active ? 34 : 24,
                           fontWeight: FontWeight.w900,
                           color:
-                              active ? Colors.white : AppColors.textSecondary)),
+                              active ? Colors.white : context.cx.textSecondary)),
                   Text(active ? 'BCP mined' : 'Tap start below',
                       style: TextStyle(
                           color: active
                               ? Colors.white.withOpacity(.9)
-                              : AppColors.textSecondary,
+                              : context.cx.textSecondary,
                           fontSize: 12)),
                 ],
               ),

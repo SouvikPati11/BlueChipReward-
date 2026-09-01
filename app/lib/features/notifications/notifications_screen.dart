@@ -6,6 +6,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/state_views.dart';
 import '../../providers/data_providers.dart';
 import '../../providers/repositories.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -66,7 +67,7 @@ class NotificationsScreen extends ConsumerWidget {
                         .withOpacity(n.read ? .06 : .14),
                     child: Icon(_icon(n.type),
                         color: n.read
-                            ? AppColors.textSecondary
+                            ? context.cx.textSecondary
                             : AppColors.primary),
                   ),
                   title: Text(n.title,
@@ -75,8 +76,8 @@ class NotificationsScreen extends ConsumerWidget {
                               n.read ? FontWeight.w600 : FontWeight.w800)),
                   subtitle: n.body != null ? Text(n.body!) : null,
                   trailing: Text(Fmt.timeAgo(n.createdAt),
-                      style: const TextStyle(
-                          fontSize: 11, color: AppColors.textSecondary)),
+                      style: TextStyle(
+                          fontSize: 11, color: context.cx.textSecondary)),
                 );
               },
             );

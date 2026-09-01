@@ -6,6 +6,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/state_views.dart';
 import '../../providers/data_providers.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class WithdrawalsHistoryScreen extends ConsumerWidget {
   const WithdrawalsHistoryScreen({super.key});
@@ -62,14 +63,14 @@ class WithdrawalsHistoryScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 6),
                       Text('${w.methodKey.toUpperCase()} • ${Fmt.dateTime(w.createdAt)}',
-                          style: TextStyle(color: AppColors.textSecondary)),
+                          style: TextStyle(color: context.cx.textSecondary)),
                       if (w.adminNotes != null &&
                           w.adminNotes!.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppColors.surfaceAlt,
+                            color: context.cx.surfaceAlt,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text('Note: ${w.adminNotes}',

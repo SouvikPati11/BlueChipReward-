@@ -9,6 +9,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/state_views.dart';
 import '../../providers/data_providers.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class ReferralScreen extends ConsumerWidget {
   const ReferralScreen({super.key});
@@ -76,7 +77,7 @@ class ReferralScreen extends ConsumerWidget {
                     children: [
                       const Text('Your referral code',
                           style: TextStyle(
-                              color: AppColors.textSecondary, fontSize: 13)),
+                              color: context.cx.textSecondary, fontSize: 13)),
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -85,10 +86,10 @@ class ReferralScreen extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 14),
                               decoration: BoxDecoration(
-                                color: AppColors.surfaceAlt,
+                                color: context.cx.surfaceAlt,
                                 borderRadius: BorderRadius.circular(12),
                                 border:
-                                    Border.all(color: AppColors.border),
+                                    Border.all(color: context.cx.border),
                               ),
                               child: Text(stats.referralCode,
                                   style: const TextStyle(
@@ -176,7 +177,7 @@ class _StatCard extends StatelessWidget {
           Text(value,
               style: const TextStyle(
                   fontSize: 24, fontWeight: FontWeight.w900)),
-          Text(label, style: TextStyle(color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(color: context.cx.textSecondary)),
         ],
       ),
     );

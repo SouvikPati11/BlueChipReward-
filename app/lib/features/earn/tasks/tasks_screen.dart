@@ -8,6 +8,7 @@ import '../../../core/widgets/state_views.dart';
 import '../../../models/earn_models.dart';
 import '../../../providers/data_providers.dart';
 import '../../../providers/repositories.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key});
@@ -127,7 +128,7 @@ class _TaskCard extends StatelessWidget {
                             fontSize: 16, fontWeight: FontWeight.w800)),
                     if (task.description != null)
                       Text(task.description!,
-                          style: TextStyle(color: AppColors.textSecondary)),
+                          style: TextStyle(color: context.cx.textSecondary)),
                   ],
                 ),
               ),

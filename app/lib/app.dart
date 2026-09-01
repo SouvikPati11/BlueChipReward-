@@ -5,6 +5,7 @@ import 'core/config/constants.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/misc/config_error_screen.dart';
+import 'providers/theme_provider.dart';
 
 class BlueChipApp extends ConsumerWidget {
   final bool configError;
@@ -12,11 +13,15 @@ class BlueChipApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+
     if (configError) {
       return MaterialApp(
         title: K.appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: themeMode,
         home: const ConfigErrorScreen(),
       );
     }
@@ -26,6 +31,8 @@ class BlueChipApp extends ConsumerWidget {
       title: K.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeMode,
       routerConfig: router,
     );
   }

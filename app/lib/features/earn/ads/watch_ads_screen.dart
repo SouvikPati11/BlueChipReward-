@@ -6,6 +6,7 @@ import '../../../core/utils/rewarded_ad_service.dart';
 import '../../../core/widgets/common.dart';
 import '../../../providers/data_providers.dart';
 import '../../../providers/repositories.dart';
+import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 class WatchAdsScreen extends ConsumerStatefulWidget {
   const WatchAdsScreen({super.key});
@@ -151,7 +152,7 @@ class _RulesCard extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
               child: Text(text,
-                  style: TextStyle(color: AppColors.textSecondary))),
+                  style: TextStyle(color: context.cx.textSecondary))),
         ],
       ),
     );
