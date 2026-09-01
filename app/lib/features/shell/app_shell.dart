@@ -25,8 +25,17 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     final index = _indexFor(location);
+    final onHome = index == 0;
 
-    return Scaffold(
+    // Android system back: from any non-Home tab, go to Home instead of exiting
+    // the app. Only Home allows the default pop (exit). Detail screens are
+    // pushed above the shell and pop normally.
+    return PopScope(
+      canPop: onHome,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/home');
+      },
+      child: Scaffold(
       body: child,
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
@@ -64,6 +73,7 @@ class AppShell extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

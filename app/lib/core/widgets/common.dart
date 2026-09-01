@@ -1,8 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_colors.dart';
 import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
 /// Small shared building blocks.
+
+/// A shimmering placeholder box used for skeleton loading states so the layout
+/// keeps its dimensions (no UI jump) while data loads.
+class SkeletonBox extends StatelessWidget {
+  final double? width;
+  final double height;
+  final double radius;
+  const SkeletonBox({super.key, this.width, this.height = 14, this.radius = 10});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: context.cx.surfaceAlt,
+        borderRadius: BorderRadius.circular(radius),
+      ),
+    )
+        .animate(onPlay: (c) => c.repeat())
+        .shimmer(
+            duration: 1200.ms,
+            color: context.cx.surface.withValues(alpha: .6));
+  }
+}
 
 class SectionCard extends StatelessWidget {
   final Widget child;
