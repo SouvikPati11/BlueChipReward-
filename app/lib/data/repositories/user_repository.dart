@@ -94,6 +94,16 @@ class UserRepository {
     }
   }
 
+  /// Admin-configured links (support, social, pages) surfaced in Settings.
+  Future<List<Map<String, dynamic>>> appLinks() async {
+    try {
+      final res = await Db.client.rpc('app_links_list');
+      return (res as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
   Future<void> markNotificationRead(String id) async {
     try {
       await Db.client.from('notifications').update({'read': true}).eq('id', id);

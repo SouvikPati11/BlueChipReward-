@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/widgets/common.dart';
@@ -111,18 +112,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: 20),
               const _Group('About & support'),
-              _link(Icons.help_outline_rounded, 'Help & support',
-                  'mailto:support@bluechiprewards.app'),
-              _link(Icons.description_outlined, 'Terms of Service',
-                  'https://souvikpati11.github.io/BlueChipReward-/terms.html'),
-              _link(Icons.privacy_tip_outlined, 'Privacy Policy',
-                  'https://souvikpati11.github.io/BlueChipReward-/privacy.html'),
+              ref.watch(appLinksProvider).maybeWhen(
+                    data: (links) => links.isEmpty
+                        ? _fallbackLinks()
+                        : Column(
+                            children: [
+                              for (final l in links)
+                                _link(
+                                  _iconFor(l['icon'] as String?),
+                                  '${l['label']}',
+                                  '${l['url']}',
+                                  external: l['external'] as bool? ?? true,
+                                ),
+                            ],
+                          ),
+                    orElse: _fallbackLinks,
+                  ),
               const SizedBox(height: 10),
               const _Group('App information'),
               const ListTile(
                 leading: Icon(Icons.info_outline_rounded),
                 title: Text('Version'),
-                trailing: Text('1.0.2'),
+                trailing: Text('1.1.0'),
               ),
             ],
           ),
@@ -131,16 +142,60 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _link(IconData icon, String title, String url) {
+  Widget _fallbackLinks() {
+    return Column(
+      children: [
+        _link(Icons.help_outline_rounded, 'Help & support',
+            'https://souvikpati11.github.io/BlueChipReward-/'),
+        _link(Icons.description_outlined, 'Terms of Service',
+            'https://souvikpati11.github.io/BlueChipReward-/terms.html'),
+        _link(Icons.privacy_tip_outlined, 'Privacy Policy',
+            'https://souvikpati11.github.io/BlueChipReward-/privacy.html'),
+      ],
+    );
+  }
+
+  Widget _link(IconData icon, String title, String url,
+      {bool external = true}) {
     return ListTile(
       leading: Icon(icon, color: context.cx.textPrimary),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+      trailing: Icon(
+          external ? Icons.open_in_new_rounded : Icons.chevron_right_rounded,
+          size: 18),
       onTap: () {
-        final uri = Uri.tryParse(url);
-        if (uri != null) launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (external) {
+          final uri = Uri.tryParse(url);
+          if (uri != null) {
+            launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        } else {
+          context.push(url);
+        }
       },
     );
+  }
+
+  /// Map an admin-provided icon name to a Material icon (safe fallback).
+  IconData _iconFor(String? name) {
+    switch (name) {
+      case 'support_agent':
+        return Icons.support_agent_rounded;
+      case 'send':
+        return Icons.send_rounded;
+      case 'help_center':
+        return Icons.help_center_rounded;
+      case 'description':
+        return Icons.description_outlined;
+      case 'privacy_tip':
+        return Icons.privacy_tip_outlined;
+      case 'star':
+        return Icons.star_rounded;
+      case 'public':
+        return Icons.public_rounded;
+      default:
+        return Icons.link_rounded;
+    }
   }
 }
 

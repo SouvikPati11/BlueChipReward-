@@ -127,6 +127,7 @@ class AppNotification {
   final String type;
   final bool read;
   final DateTime createdAt;
+  final Map<String, dynamic> data;
 
   const AppNotification({
     required this.id,
@@ -135,7 +136,14 @@ class AppNotification {
     required this.type,
     required this.read,
     required this.createdAt,
+    this.data = const {},
   });
+
+  /// Deep-link target (in-app route) if the notification carries one.
+  String? get route {
+    final r = data['route'];
+    return r is String && r.isNotEmpty ? r : null;
+  }
 
   factory AppNotification.fromJson(Map<String, dynamic> j) => AppNotification(
         id: j['id'] as String,
@@ -144,5 +152,6 @@ class AppNotification {
         type: j['type'] as String? ?? 'system',
         read: j['read'] as bool? ?? false,
         createdAt: DateTime.parse(j['created_at'] as String),
+        data: (j['data'] as Map?)?.cast<String, dynamic>() ?? const {},
       );
 }

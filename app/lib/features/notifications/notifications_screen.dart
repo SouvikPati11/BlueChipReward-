@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
@@ -61,6 +62,9 @@ class NotificationsScreen extends ConsumerWidget {
                           .markNotificationRead(n.id);
                       ref.invalidate(notificationsProvider);
                     }
+                    // Deep-link: reminders and reward events carry a route.
+                    final route = n.route;
+                    if (route != null) context.push(route);
                   },
                   leading: CircleAvatar(
                     backgroundColor: AppColors.primary

@@ -26,6 +26,12 @@ final notificationsProvider =
   return ref.watch(userRepositoryProvider).fetchNotifications();
 });
 
+/// Admin-configured links shown in Settings.
+final appLinksProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(userRepositoryProvider).appLinks();
+});
+
 final dailyStatusProvider = FutureProvider.autoDispose<DailyStatus>((ref) {
   return ref.watch(earnRepositoryProvider).dailyStatus();
 });
