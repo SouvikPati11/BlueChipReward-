@@ -128,4 +128,176 @@ class AdminRepository {
       throw AppFailure.from(e);
     }
   }
+
+  Future<void> setAdmin(String userId, bool grant) async {
+    try {
+      await Db.client.rpc('admin_set_admin',
+          params: {'p_user': userId, 'p_grant': grant});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  // ---- Task management -----------------------------------------------------
+  Future<List<Map<String, dynamic>>> allTasks() async {
+    try {
+      final rows =
+          await Db.client.from('tasks').select().order('position');
+      return (rows as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> saveTask(Map<String, dynamic> t) async {
+    try {
+      await Db.client.rpc('admin_save_task', params: {
+        'p_id': t['id'],
+        'p_title': t['title'],
+        'p_description': t['description'],
+        'p_type': t['type'],
+        'p_reward': t['reward'],
+        'p_action_url': t['action_url'],
+        'p_instructions': t['instructions'],
+        'p_auto_verify': t['auto_verify'],
+        'p_active': t['active'],
+        'p_position': t['position'],
+      });
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> deleteTask(String id) async {
+    try {
+      await Db.client.rpc('admin_delete_task', params: {'p_id': id});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  // ---- Quiz management -----------------------------------------------------
+  Future<List<Map<String, dynamic>>> quizzes() async {
+    try {
+      final rows = await Db.client
+          .from('quizzes')
+          .select('id, quiz_date, title, reward, active, quiz_questions(count)')
+          .order('quiz_date', ascending: false)
+          .limit(60);
+      return (rows as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> quizQuestions(String quizId) async {
+    try {
+      final rows = await Db.client
+          .from('quiz_questions')
+          .select()
+          .eq('quiz_id', quizId)
+          .order('position');
+      return (rows as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<String> createQuiz(String date, String title, int reward) async {
+    try {
+      final res = await Db.client.rpc('admin_create_quiz',
+          params: {'p_quiz_date': date, 'p_title': title, 'p_reward': reward});
+      return (res as Map)['id'] as String;
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> addQuizQuestion(String quizId, String question,
+      List<String> options, int correctIndex, int position) async {
+    try {
+      await Db.client.rpc('admin_add_quiz_question', params: {
+        'p_quiz_id': quizId,
+        'p_question': question,
+        'p_options': options,
+        'p_correct_index': correctIndex,
+        'p_position': position,
+      });
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> deleteQuizQuestion(String id) async {
+    try {
+      await Db.client.rpc('admin_delete_quiz_question', params: {'p_id': id});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  // ---- Payment methods -----------------------------------------------------
+  Future<List<Map<String, dynamic>>> allPaymentMethods() async {
+    try {
+      final rows =
+          await Db.client.from('payment_methods').select().order('position');
+      return (rows as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> savePaymentMethod(Map<String, dynamic> m) async {
+    try {
+      await Db.client.rpc('admin_save_payment_method', params: {
+        'p_id': m['id'],
+        'p_key': m['key'],
+        'p_name': m['name'],
+        'p_fields': m['fields'],
+        'p_min_amount': m['min_amount'],
+        'p_active': m['active'],
+        'p_position': m['position'],
+      });
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> deletePaymentMethod(String id) async {
+    try {
+      await Db.client
+          .rpc('admin_delete_payment_method', params: {'p_id': id});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  // ---- Audit logs ----------------------------------------------------------
+  Future<List<Map<String, dynamic>>> auditLogs() async {
+    try {
+      final rows = await Db.client
+          .from('audit_logs')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(100);
+      return (rows as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  // ---- User detail ---------------------------------------------------------
+  Future<List<Map<String, dynamic>>> userTransactions(String userId) async {
+    try {
+      final rows = await Db.client
+          .from('wallet_transactions')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(50);
+      return (rows as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
 }

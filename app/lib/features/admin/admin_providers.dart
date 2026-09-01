@@ -27,3 +27,28 @@ final adminUsersProvider = FutureProvider.autoDispose
     .family<List<Map<String, dynamic>>, String>((ref, search) {
   return ref.watch(adminRepositoryProvider).users(search: search);
 });
+
+final adminAllTasksProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(adminRepositoryProvider).allTasks();
+});
+
+final adminQuizzesProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(adminRepositoryProvider).quizzes();
+});
+
+final adminQuizQuestionsProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, quizId) {
+  return ref.watch(adminRepositoryProvider).quizQuestions(quizId);
+});
+
+final adminPaymentMethodsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(adminRepositoryProvider).allPaymentMethods();
+});
+
+final adminAuditProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(adminRepositoryProvider).auditLogs();
+});

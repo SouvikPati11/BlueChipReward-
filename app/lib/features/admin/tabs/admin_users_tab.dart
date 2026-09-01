@@ -28,6 +28,35 @@ class _AdminUsersTabState extends ConsumerState<AdminUsersTab> {
     }
   }
 
+  Future<void> _role(String userId) async {
+    final grant = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Admin role'),
+        content: const Text(
+            'Grant or revoke admin access for this user? The last remaining '
+            'admin cannot be removed.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Revoke admin')),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Grant admin')),
+        ],
+      ),
+    );
+    if (grant == null) return;
+    try {
+      await ref.read(adminRepositoryProvider).setAdmin(userId, grant);
+      if (mounted) {
+        showSnack(context, grant ? 'Admin granted' : 'Admin revoked');
+      }
+    } catch (e) {
+      if (mounted) showSnack(context, '$e', error: true);
+    }
+  }
+
   Future<void> _adjust(String userId) async {
     final ctrl = TextEditingController();
     final reason = TextEditingController();
@@ -176,6 +205,14 @@ class _AdminUsersTabState extends ConsumerState<AdminUsersTab> {
                                   side: const BorderSide(
                                       color: AppColors.danger)),
                               child: const Text('Ban'),
+                            ),
+                            OutlinedButton(
+                              onPressed: () => _role(u['id'] as String),
+                              style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.primary,
+                                  side: const BorderSide(
+                                      color: AppColors.primary)),
+                              child: const Text('Role'),
                             ),
                           ],
                         ),

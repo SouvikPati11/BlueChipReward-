@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/state_views.dart';
 import '../../providers/auth_providers.dart';
+import 'tabs/admin_audit_tab.dart';
+import 'tabs/admin_content_tab.dart';
 import 'tabs/admin_dashboard_tab.dart';
 import 'tabs/admin_settings_tab.dart';
 import 'tabs/admin_tasks_tab.dart';
@@ -41,7 +43,7 @@ class AdminHome extends ConsumerWidget {
           );
         }
         return DefaultTabController(
-          length: 5,
+          length: 7,
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Admin Panel'),
@@ -52,9 +54,11 @@ class AdminHome extends ConsumerWidget {
                 tabs: [
                   Tab(text: 'Dashboard'),
                   Tab(text: 'Withdrawals'),
-                  Tab(text: 'Tasks'),
+                  Tab(text: 'Reviews'),
                   Tab(text: 'Users'),
+                  Tab(text: 'Content'),
                   Tab(text: 'Config'),
+                  Tab(text: 'Audit'),
                 ],
               ),
             ),
@@ -64,7 +68,9 @@ class AdminHome extends ConsumerWidget {
                 AdminWithdrawalsTab(),
                 AdminTasksTab(),
                 AdminUsersTab(),
+                AdminContentTab(),
                 AdminSettingsTab(),
+                AdminAuditTab(),
               ],
             ),
           ),
