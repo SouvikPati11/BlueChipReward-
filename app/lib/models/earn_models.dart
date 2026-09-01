@@ -154,3 +154,54 @@ class TaskItem {
       completionState == 'rewarded' || completionState == 'verified';
   bool get isPending => completionState == 'pending';
 }
+
+/// Invite milestone (dedicated invite-reward system).
+class InviteMilestone {
+  final String id;
+  final int threshold;
+  final int reward;
+  final bool autoVerify;
+  final bool reached;
+  final String state; // none | pending | credited | rejected
+  final bool claimable;
+
+  const InviteMilestone({
+    required this.id,
+    required this.threshold,
+    required this.reward,
+    required this.autoVerify,
+    required this.reached,
+    required this.state,
+    required this.claimable,
+  });
+
+  factory InviteMilestone.fromJson(Map<String, dynamic> j) => InviteMilestone(
+        id: j['id'] as String,
+        threshold: (j['threshold'] as num?)?.toInt() ?? 0,
+        reward: (j['reward'] as num?)?.toInt() ?? 0,
+        autoVerify: j['auto_verify'] as bool? ?? true,
+        reached: j['reached'] as bool? ?? false,
+        state: j['state'] as String? ?? 'none',
+        claimable: j['claimable'] as bool? ?? false,
+      );
+
+  bool get isCredited => state == 'credited';
+  bool get isPending => state == 'pending';
+  bool get isRejected => state == 'rejected';
+}
+
+class InviteMilestonesOverview {
+  final int inviteCount;
+  final List<InviteMilestone> milestones;
+  const InviteMilestonesOverview(
+      {required this.inviteCount, required this.milestones});
+
+  factory InviteMilestonesOverview.fromJson(Map<String, dynamic> j) =>
+      InviteMilestonesOverview(
+        inviteCount: (j['invite_count'] as num?)?.toInt() ?? 0,
+        milestones: ((j['milestones'] as List?) ?? const [])
+            .map((e) =>
+                InviteMilestone.fromJson((e as Map).cast<String, dynamic>()))
+            .toList(),
+      );
+}

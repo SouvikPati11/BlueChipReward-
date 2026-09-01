@@ -38,6 +38,11 @@ final tasksProvider = FutureProvider.autoDispose<List<TaskItem>>((ref) {
   return ref.watch(earnRepositoryProvider).fetchTasks();
 });
 
+final inviteMilestonesProvider =
+    FutureProvider.autoDispose<InviteMilestonesOverview>((ref) {
+  return ref.watch(earnRepositoryProvider).inviteMilestones();
+});
+
 final quizProvider = FutureProvider.autoDispose<DailyQuiz>((ref) {
   return ref.watch(earnRepositoryProvider).quizToday();
 });

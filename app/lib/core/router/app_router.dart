@@ -12,6 +12,7 @@ import '../../features/auth/register_screen.dart';
 import '../../features/earn/ads/watch_ads_screen.dart';
 import '../../features/earn/daily/daily_reward_screen.dart';
 import '../../features/earn/mining/mining_screen.dart';
+import '../../features/earn/invite/invite_milestones_screen.dart';
 import '../../features/earn/quiz/quiz_screen.dart';
 import '../../features/earn/scratch/scratch_screen.dart';
 import '../../features/earn/tasks/tasks_screen.dart';
@@ -69,6 +70,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/earn/ads', builder: (_, __) => const WatchAdsScreen()),
       GoRoute(path: '/earn/quiz', builder: (_, __) => const QuizScreen()),
       GoRoute(path: '/earn/tasks', builder: (_, __) => const TasksScreen()),
+      GoRoute(
+          path: '/refer/milestones',
+          builder: (_, __) => const InviteMilestonesScreen()),
 
       // Wallet / withdrawal
       GoRoute(path: '/withdraw', builder: (_, __) => const WithdrawScreen()),

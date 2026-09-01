@@ -1,3 +1,7 @@
+import 'dart:typed_data';
+
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
+
 import '../../core/error/failure.dart';
 import '../../core/supabase/supabase_client.dart';
 import '../../models/earn_models.dart';
@@ -75,4 +79,36 @@ class EarnRepository {
   Future<Map<String, dynamic>> submitTask(String taskId,
           {Map<String, dynamic>? proof}) =>
       _rpc('submit_task', {'p_task_id': taskId, 'p_proof': proof ?? {}});
+
+  // ---- Invite milestones ---------------------------------------------------
+  Future<InviteMilestonesOverview> inviteMilestones() async =>
+      InviteMilestonesOverview.fromJson(await _rpc('invite_milestones_overview'));
+
+  /// Auto-verify milestones need no proof. Manual milestones require a proof
+  /// screenshot path uploaded to the private `proofs` bucket.
+  Future<Map<String, dynamic>> claimInviteMilestone(String milestoneId,
+          {String? proofPath}) =>
+      _rpc('claim_invite_milestone', {
+        'p_milestone_id': milestoneId,
+        if (proofPath != null) 'p_proof_url': proofPath,
+      });
+
+  /// Upload proof image bytes to the user's folder in the `proofs` bucket and
+  /// return the stored object path (used as the claim's proof reference).
+  Future<String> uploadProof(String milestoneId, List<int> bytes,
+      {String ext = 'jpg'}) async {
+    try {
+      final uid = Db.uid!;
+      final path =
+          '$uid/${milestoneId}_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      await Db.client.storage.from('proofs').uploadBinary(
+            path,
+            Uint8List.fromList(bytes),
+            fileOptions: const FileOptions(upsert: true),
+          );
+      return path;
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
 }

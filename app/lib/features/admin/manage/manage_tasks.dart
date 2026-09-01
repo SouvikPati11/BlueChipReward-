@@ -149,6 +149,9 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
     super.initState();
     if (widget.task != null) {
       _type = widget.task!['type'] ?? 'link_visit';
+      // The legacy 'invite' type is retired in favour of the dedicated invite
+      // milestone system; coerce old rows so the dropdown stays valid.
+      if (_type == 'invite') _type = 'custom';
       _autoVerify = widget.task!['auto_verify'] ?? true;
       _active = widget.task!['active'] ?? true;
     }
@@ -215,7 +218,6 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
                 DropdownMenuItem(value: 'link_visit', child: Text('Link visit')),
                 DropdownMenuItem(value: 'telegram', child: Text('Telegram')),
                 DropdownMenuItem(value: 'social', child: Text('Social')),
-                DropdownMenuItem(value: 'invite', child: Text('Invite')),
                 DropdownMenuItem(value: 'custom', child: Text('Custom')),
               ],
               onChanged: (v) => setState(() => _type = v ?? 'link_visit'),
