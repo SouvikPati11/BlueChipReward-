@@ -46,14 +46,25 @@ class _ManageNotificationsScreenState
     }
     setState(() => _sending = true);
     try {
-      final n = await ref.read(adminRepositoryProvider).sendNotification(
+      final r = await ref.read(adminRepositoryProvider).sendNotification(
             title,
             _body.text.trim(),
             target: _target,
             userIds: _target == 'specific' ? _selectedIds.toList() : null,
           );
       if (!mounted) return;
-      showSnack(context, 'Sent to $n user(s)');
+      final msg = StringBuffer('In-app: sent to ${r.recipients} user(s).');
+      if (r.pushError) {
+        msg.write(' Push service unavailable.');
+      } else if (!r.pushConfigured) {
+        msg.write(' Push not configured (add FCM_SERVICE_ACCOUNT).');
+      } else {
+        msg.write(' Push: ${r.pushSent} delivered');
+        if (r.pushFailed > 0) msg.write(', ${r.pushFailed} failed');
+        if (r.pushCleaned > 0) msg.write(', ${r.pushCleaned} stale removed');
+        msg.write('.');
+      }
+      showSnack(context, msg.toString());
       _title.clear();
       _body.clear();
       setState(() {

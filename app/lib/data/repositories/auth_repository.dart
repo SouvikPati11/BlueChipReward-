@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/error/failure.dart';
+import '../../core/push/push_service.dart';
 import '../../core/supabase/supabase_client.dart';
 import '../../core/utils/device_id.dart';
 
@@ -105,6 +106,10 @@ class AuthRepository {
 
   Future<void> signOut() async {
     try {
+      // Remove this device's push token BEFORE the session ends (the RPC needs
+      // the caller's auth), so a signed-out phone / next account never receives
+      // the previous user's pushes.
+      await PushService.unregisterCurrentToken();
       await GoogleSignIn().signOut().catchError((_) => null);
       await _auth.signOut();
     } catch (e) {

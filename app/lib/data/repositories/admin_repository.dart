@@ -2,6 +2,25 @@ import '../../core/error/failure.dart';
 import '../../core/supabase/supabase_client.dart';
 import '../../models/wallet_models.dart';
 
+/// Outcome of sending a custom notification: the in-app fan-out count plus the
+/// real push-delivery status from the FCM edge function.
+class SendResult {
+  final int recipients; // in-app recipients (broadcast counts active users)
+  final bool pushConfigured; // FCM service account present on the server
+  final bool pushError; // push call failed / function unavailable
+  final int pushSent;
+  final int pushFailed;
+  final int pushCleaned;
+  const SendResult({
+    required this.recipients,
+    this.pushConfigured = false,
+    this.pushError = false,
+    this.pushSent = 0,
+    this.pushFailed = 0,
+    this.pushCleaned = 0,
+  });
+}
+
 /// Admin data access. Every mutating call maps to a server RPC that re-checks
 /// the admin role — the client role flag is only used to reveal the UI.
 class AdminRepository {
@@ -105,8 +124,16 @@ class AdminRepository {
 
   /// §29/§30 — send a custom notification now. [target] is 'all' or 'specific';
   /// [userIds] is required when target == 'specific'.
-  Future<int> sendNotification(String title, String body,
+  ///
+  /// Two real deliveries happen: (1) the RPC writes the in-app feed + history
+  /// (always), then (2) the `push` edge function delivers a real FCM push to
+  /// registered devices. Push is best-effort — if FCM is not configured or the
+  /// function is unavailable, the in-app notification still succeeded, and the
+  /// returned [SendResult.pushConfigured] reflects that so the UI can say so.
+  Future<SendResult> sendNotification(String title, String body,
       {String target = 'all', List<String>? userIds}) async {
+    // 1. In-app + history (source of truth). Failure here is a real error.
+    late final Map<String, dynamic> rpc;
     try {
       final res = await Db.client.rpc('admin_send_notification', params: {
         'p_title': title,
@@ -114,9 +141,35 @@ class AdminRepository {
         'p_target': target,
         'p_user_ids': userIds,
       });
-      return (res is Map ? (res['recipients'] as num?)?.toInt() : null) ?? 0;
+      rpc = (res is Map) ? res.cast<String, dynamic>() : <String, dynamic>{};
     } catch (e) {
       throw AppFailure.from(e);
+    }
+    final recipients = (rpc['recipients'] as num?)?.toInt() ?? 0;
+    final id = rpc['id']?.toString();
+
+    // 2. Real push delivery (best-effort).
+    try {
+      final res = await Db.client.functions.invoke('push', body: {
+        'title': title,
+        'body': body,
+        'route': '/notifications',
+        'target': target,
+        'user_ids': userIds,
+        'id': id,
+      });
+      final data = res.data;
+      final map = (data is Map) ? data.cast<String, dynamic>() : const {};
+      return SendResult(
+        recipients: recipients,
+        pushConfigured: map['configured'] == true,
+        pushSent: (map['sent'] as num?)?.toInt() ?? 0,
+        pushFailed: (map['failed'] as num?)?.toInt() ?? 0,
+        pushCleaned: (map['cleaned'] as num?)?.toInt() ?? 0,
+      );
+    } catch (_) {
+      // Push unavailable (function not deployed, network, etc.) — in-app is done.
+      return SendResult(recipients: recipients, pushError: true);
     }
   }
 

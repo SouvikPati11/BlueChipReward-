@@ -25,11 +25,16 @@ import '../../features/withdrawal/withdraw_screen.dart';
 import '../../features/withdrawal/withdrawals_history_screen.dart';
 import '../supabase/supabase_client.dart';
 
+/// The live [GoRouter] instance, exposed so out-of-widget code (a push
+/// notification tap handled in a background isolate hand-off, for example) can
+/// navigate without a BuildContext. Set when the router provider is built.
+GoRouter? appRouter;
+
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _AuthRefresh(Db.auth.onAuthStateChange);
   ref.onDispose(refresh.dispose);
 
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/splash',
     refreshListenable: refresh,
     redirect: (context, state) {
@@ -90,6 +95,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin', builder: (_, __) => const AdminHome()),
     ],
   );
+  appRouter = router;
+  return router;
 });
 
 class _AuthRefresh extends ChangeNotifier {
