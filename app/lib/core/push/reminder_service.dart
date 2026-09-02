@@ -145,6 +145,8 @@ class ReminderService {
           ),
           // Inexact avoids needing the restricted exact-alarm permission.
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
           matchDateTimeComponents: DateTimeComponents.time, // repeat daily
           payload: r.route,
         );
