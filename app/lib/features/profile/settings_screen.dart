@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/push/reminder_service.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/state_views.dart';
 import '../../providers/data_providers.dart';
@@ -101,6 +102,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+              const _Group('Notifications'),
+              const SectionCard(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                child: _RemindersTile(),
+              ),
+              const SizedBox(height: 20),
               const _Group('Appearance'),
               SectionCard(
                 padding: const EdgeInsets.all(14),
@@ -133,7 +140,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const ListTile(
                 leading: Icon(Icons.info_outline_rounded),
                 title: Text('Version'),
-                trailing: Text('1.2.0'),
+                trailing: Text('1.3.2'),
               ),
             ],
           ),
@@ -242,6 +249,56 @@ class _Group extends StatelessWidget {
               fontWeight: FontWeight.w800,
               letterSpacing: 1,
               color: context.cx.textSecondary)),
+    );
+  }
+}
+
+/// Toggle for on-device daily reminders (local notifications). Turning it on
+/// requests the notification permission and schedules the reminders; off
+/// cancels them. Denial is handled gracefully by [ReminderService].
+class _RemindersTile extends StatefulWidget {
+  const _RemindersTile();
+
+  @override
+  State<_RemindersTile> createState() => _RemindersTileState();
+}
+
+class _RemindersTileState extends State<_RemindersTile> {
+  bool _enabled = true;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    ReminderService.isEnabled().then((v) {
+      if (mounted) setState(() {
+            _enabled = v;
+            _loading = false;
+          });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      value: _enabled,
+      onChanged: _loading
+          ? null
+          : (v) async {
+              setState(() => _enabled = v);
+              await ReminderService.setEnabled(v);
+              if (v && mounted) {
+                final ok = await ReminderService.requestPermission();
+                if (!ok && mounted) {
+                  showSnack(context,
+                      'Enable notifications in system settings to receive reminders.');
+                }
+              }
+            },
+      secondary: const Icon(Icons.alarm_rounded),
+      title: const Text('Daily reminders'),
+      subtitle: const Text(
+          'On-device reminders for daily reward, mining, quiz, tasks and more'),
     );
   }
 }

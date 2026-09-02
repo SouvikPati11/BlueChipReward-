@@ -87,6 +87,33 @@ def patch_manifest():
             1,
         )
 
+    # 1b2. RECEIVE_BOOT_COMPLETED so scheduled local reminders are restored
+    #      after a device reboot (they already fire while the app is merely
+    #      closed; this covers reboots too).
+    if "android.permission.RECEIVE_BOOT_COMPLETED" not in xml:
+        xml = xml.replace(
+            "<application",
+            '<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n'
+            "    <application",
+            1,
+        )
+
+    # 1b3. flutter_local_notifications boot receiver to re-register the daily
+    #      reminders after reboot.
+    if "ScheduledNotificationBootReceiver" not in xml:
+        boot = (
+            '        <receiver\n'
+            '            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"\n'
+            '            android:exported="false">\n'
+            '            <intent-filter>\n'
+            '                <action android:name="android.intent.action.BOOT_COMPLETED"/>\n'
+            '                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>\n'
+            '                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>\n'
+            '            </intent-filter>\n'
+            '        </receiver>\n'
+        )
+        xml = re.sub(r"(<application\b[^>]*>)", r"\1\n" + boot, xml, count=1)
+
     # 1c. FCM default notification channel + icon so background/terminated
     #     messages render in a channel with a sensible importance and our icon.
     if "com.google.firebase.messaging.default_notification_channel_id" not in xml:

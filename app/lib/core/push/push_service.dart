@@ -38,6 +38,9 @@ class PushService {
 
   static final FlutterLocalNotificationsPlugin _local =
       FlutterLocalNotificationsPlugin();
+  /// The shared local-notifications plugin. Reminder scheduling reuses this so
+  /// there is a single `initialize` (single tap handler) across the app.
+  static FlutterLocalNotificationsPlugin get plugin => _local;
   static bool _started = false;
   static bool _localReady = false;
   static bool _available = false;

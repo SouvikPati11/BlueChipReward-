@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/config/app_config.dart';
 import 'core/push/push_service.dart';
+import 'core/push/reminder_service.dart';
 import 'core/supabase/supabase_client.dart';
 
 Future<void> main() async {
@@ -50,6 +51,10 @@ Future<void> main() async {
         // Flush any deep-link captured before the router existed (cold-start
         // notification tap).
         PushService.applyPendingRoute();
+
+        // Schedule on-device daily reminders (local notifications, no server).
+        // Respects the user's opt-out and notification permission.
+        ReminderService.scheduleAll();
 
         // Keep the device token in sync with the session: (re)register on
         // sign-in / token refresh. Sign-out cleanup happens in signOut() before
