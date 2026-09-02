@@ -1,128 +1,79 @@
 #!/usr/bin/env python3
-"""Generate the BlueChip Rewards Android launcher icons with zero dependencies.
+"""Generate BlueChip Rewards Android launcher icons from the OFFICIAL logo.
 
-Draws a premium deep-blue icon with a gold diamond ("chip") and writes the full
-set of legacy + adaptive mipmaps into app/android_res/, which patch_android.py
-copies into the generated Android project. Re-run to regenerate.
+Uses the exact uploaded artwork at app/assets/branding/logo.png — it does NOT
+draw or approximate a logo. Produces the legacy square mipmaps and the adaptive
+icon foreground for every density into app/android_res/, which patch_android.py
+copies into the generated Android project. Requires Pillow (build/dev only).
+
+Re-run after replacing the source logo:  python3 tool/gen_icons.py
 """
 import os
-import struct
-import zlib
 
-OUT = os.path.join(os.path.dirname(__file__), "..", "android_res")
+from PIL import Image
 
-# Brand colours (RGB)
-BG_TOP = (30, 58, 138)      # #1E3A8A
-BG_BOT = (59, 130, 246)     # #3B82F6
-GOLD = (245, 179, 1)        # #F5B301
-GOLD_HI = (255, 214, 90)    # #FFD65A
-GOLD_MID = (240, 165, 12)   # right facet
-GOLD_LO = (214, 154, 0)     # #D69A00 bottom facet
-WHITE = (255, 255, 255)
+HERE = os.path.dirname(__file__)
+SRC = os.path.join(HERE, "..", "assets", "branding", "logo.png")
+OUT = os.path.join(HERE, "..", "android_res")
 
+# Adaptive-icon background: deep navy sampled from the logo's own background so
+# the foreground artwork blends seamlessly under any launcher mask.
+ADAPTIVE_BG = "#01143F"
 
-def _lerp(a, b, t):
-    return tuple(int(round(a[i] + (b[i] - a[i]) * t)) for i in range(3))
-
-
-def _blend(dst, src, alpha):
-    return tuple(int(round(dst[i] * (1 - alpha) + src[i] * alpha)) for i in range(3))
-
-
-def _png(path, pixels, w, h):
-    """pixels: list of (r,g,b,a) row-major."""
-    raw = bytearray()
-    for y in range(h):
-        raw.append(0)  # filter type 0
-        for x in range(w):
-            r, g, b, a = pixels[y * w + x]
-            raw += bytes((r, g, b, a))
-
-    def chunk(tag, data):
-        c = struct.pack(">I", len(data)) + tag + data
-        crc = zlib.crc32(tag + data) & 0xFFFFFFFF
-        return c + struct.pack(">I", crc)
-
-    sig = b"\x89PNG\r\n\x1a\n"
-    ihdr = struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0)
-    idat = zlib.compress(bytes(raw), 9)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "wb") as f:
-        f.write(sig + chunk(b"IHDR", ihdr) + chunk(b"IDAT", idat) + chunk(b"IEND", b""))
-
-
-def _diamond_alpha(cx, cy, x, y, r):
-    """Soft rhombus coverage in [0,1] for a diamond of 'radius' r centred at cx,cy."""
-    d = (abs(x - cx) + abs(y - cy)) / r
-    edge = 1.5 / r  # ~1.5px anti-alias band
-    if d <= 1 - edge:
-        return 1.0
-    if d >= 1 + edge:
-        return 0.0
-    return (1 + edge - d) / (2 * edge)
-
-
-def draw(size, full_bleed, diamond_scale):
-    """Return an RGBA pixel list. full_bleed: paint gradient bg; else transparent."""
-    px = [(0, 0, 0, 0)] * (size * size)
-    cx = cy = (size - 1) / 2
-    r = size * diamond_scale / 2
-    for y in range(size):
-        t = y / (size - 1)
-        bg = _lerp(BG_TOP, BG_BOT, t)
-        for x in range(size):
-            if full_bleed:
-                col = bg
-                a = 255
-            else:
-                col = (0, 0, 0)
-                a = 0
-            cov = _diamond_alpha(cx, cy, x, y, r)
-            if cov > 0:
-                dx, dy = x - cx, y - cy
-                # four facets meeting at the centre -> cut-gem look
-                if abs(dy) >= abs(dx):
-                    facet = GOLD_HI if dy < 0 else GOLD_LO   # top / bottom
-                else:
-                    facet = GOLD if dx < 0 else GOLD_MID     # left / right
-                # brighter "table" highlight near the centre
-                cd = (dx * dx + dy * dy) ** 0.5 / r
-                if cd < 0.30:
-                    facet = _blend(facet, GOLD_HI, (0.30 - cd) / 0.30 * 0.5)
-                if full_bleed:
-                    col = _blend(col, facet, cov)
-                    a = 255
-                else:
-                    col = facet
-                    a = int(round(cov * 255))
-            # crisp white sparkle on the upper-left facet
-            sx, sy = cx - r * 0.30, cy - r * 0.34
-            sd = ((x - sx) ** 2 + (y - sy) ** 2) ** 0.5
-            sr = max(1.0, size * 0.028)
-            if sd < sr and (cov > 0 or full_bleed):
-                sa = (1 - sd / sr) * 0.95
-                col = _blend(col, WHITE, sa)
-                if not full_bleed:
-                    a = max(a, int(round(sa * 255)))
-            px[y * size + x] = (col[0], col[1], col[2], a)
-    return px
-
-
-# density -> legacy launcher px size
+# density -> legacy launcher px size (48dp base)
 LEGACY = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
-# adaptive foreground is 108dp; content kept within the ~66dp safe zone
+# adaptive foreground is a 108dp canvas per density
 FOREGROUND = {"mdpi": 108, "hdpi": 162, "xhdpi": 216, "xxhdpi": 324, "xxxhdpi": 432}
+# Fraction of the 108dp canvas the logo occupies. Kept modest so the whole
+# mark (incl. the "REWARDS" wordmark) stays inside the launcher's safe zone and
+# is not cropped by circular masks.
+FG_SCALE = 0.72
+
+
+def _load():
+    im = Image.open(SRC).convert("RGBA")
+    # square-pad if the source is ever non-square (it is 1:1 today)
+    if im.width != im.height:
+        s = max(im.width, im.height)
+        canvas = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+        canvas.paste(im, ((s - im.width) // 2, (s - im.height) // 2), im)
+        im = canvas
+    return im
+
+
+def _resized(im, size):
+    return im.resize((size, size), Image.LANCZOS)
+
+
+def _save(img, density, name):
+    d = os.path.join(OUT, f"mipmap-{density}")
+    os.makedirs(d, exist_ok=True)
+    img.save(os.path.join(d, name))
 
 
 def main():
-    for d, s in LEGACY.items():
-        _png(os.path.join(OUT, f"mipmap-{d}", "ic_launcher.png"),
-             draw(s, full_bleed=True, diamond_scale=0.62), s, s)
-    for d, s in FOREGROUND.items():
-        _png(os.path.join(OUT, f"mipmap-{d}", "ic_launcher_foreground.png"),
-             draw(s, full_bleed=False, diamond_scale=0.42), s, s)
+    logo = _load()
 
-    # adaptive icon xml (v26+)
+    # Legacy square icons: the exact logo, high-quality downscaled. Its own
+    # rounded-square shape + transparent corners are preserved.
+    for density, size in LEGACY.items():
+        icon = _resized(logo, size)
+        _save(icon, density, "ic_launcher.png")
+        # round variant (used by launchers that request a round icon) — the
+        # same artwork; the logo already reads well within a circle.
+        _save(icon, density, "ic_launcher_round.png")
+
+    # Adaptive foreground: exact logo centred at FG_SCALE on a transparent
+    # 108dp canvas so nothing important is clipped by the adaptive mask.
+    for density, canvas_px in FOREGROUND.items():
+        fg = Image.new("RGBA", (canvas_px, canvas_px), (0, 0, 0, 0))
+        target = int(round(canvas_px * FG_SCALE))
+        art = _resized(logo, target)
+        off = (canvas_px - target) // 2
+        fg.paste(art, (off, off), art)
+        _save(fg, density, "ic_launcher_foreground.png")
+
+    # Adaptive icon xml (v26+): solid navy background + logo foreground.
     anydpi = os.path.join(OUT, "mipmap-anydpi-v26")
     os.makedirs(anydpi, exist_ok=True)
     adaptive = (
@@ -132,17 +83,18 @@ def main():
         '    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>\n'
         '</adaptive-icon>\n'
     )
-    with open(os.path.join(anydpi, "ic_launcher.xml"), "w") as f:
-        f.write(adaptive)
+    for fname in ("ic_launcher.xml", "ic_launcher_round.xml"):
+        with open(os.path.join(anydpi, fname), "w") as f:
+            f.write(adaptive)
 
     values = os.path.join(OUT, "values")
     os.makedirs(values, exist_ok=True)
     with open(os.path.join(values, "ic_launcher_background.xml"), "w") as f:
         f.write(
             '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
-            '    <color name="ic_launcher_background">#1E3A8A</color>\n</resources>\n'
+            f'    <color name="ic_launcher_background">{ADAPTIVE_BG}</color>\n</resources>\n'
         )
-    print("Generated launcher icons in", os.path.relpath(OUT))
+    print("Generated launcher icons from official logo into", os.path.relpath(OUT))
 
 
 if __name__ == "__main__":

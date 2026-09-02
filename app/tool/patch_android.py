@@ -45,6 +45,14 @@ def patch_manifest():
     xml = re.sub(r'android:label="[^"]*"',
                  'android:label="BlueChip Rewards"', xml, count=1)
 
+    # 0b. Round launcher icon (adaptive + legacy round mipmaps are supplied by
+    #     the android_res overlay). Add android:roundIcon next to android:icon.
+    if "android:roundIcon" not in xml:
+        xml = re.sub(
+            r'(android:icon="@mipmap/ic_launcher")',
+            r'\1\n        android:roundIcon="@mipmap/ic_launcher_round"',
+            xml, count=1)
+
     # 1. INTERNET permission (before <application>)
     if "android.permission.INTERNET" not in xml:
         xml = xml.replace(
@@ -110,11 +118,6 @@ def install_icons():
         os.makedirs(target_dir, exist_ok=True)
         for name in files:
             shutil.copy2(os.path.join(root, name), os.path.join(target_dir, name))
-    # Remove Flutter's legacy round icon so it can't shadow the adaptive one.
-    for d in ("mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"):
-        rp = os.path.join(dst, f"mipmap-{d}", "ic_launcher_round.png")
-        if os.path.exists(rp):
-            os.remove(rp)
     print("installed BlueChip Rewards launcher icons")
 
 
