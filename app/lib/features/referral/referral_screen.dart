@@ -121,8 +121,10 @@ class ReferralScreen extends ConsumerWidget {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: () => Share.share(
-                              'Join me on ${K.appName} and earn rewards! Use my code ${stats.referralCode} or tap: $link'),
+                          onPressed: () => SharePlus.instance.share(
+                              ShareParams(
+                                  text:
+                                      'Join me on ${K.appName} and earn rewards! Use my code ${stats.referralCode} or tap: $link')),
                           icon: const Icon(Icons.share_rounded),
                           label: const Text('Share invite'),
                         ),
