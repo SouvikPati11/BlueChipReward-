@@ -326,6 +326,20 @@ class AdminRepository {
     }
   }
 
+  // ---- Referral level configuration ----------------------------------------
+  Future<void> setReferralLevels(
+      List<Map<String, dynamic>> levels, bool enabled, num qualifying) async {
+    try {
+      await Db.client.rpc('admin_set_referral_levels', params: {
+        'p_levels': levels,
+        'p_enabled': enabled,
+        'p_qualifying': qualifying,
+      });
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
   // ---- Referral fraud reviews ----------------------------------------------
   Future<List<Map<String, dynamic>>> referralReviews(String status) async {
     try {

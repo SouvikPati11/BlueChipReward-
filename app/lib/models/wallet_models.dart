@@ -87,12 +87,14 @@ class ReferralStats {
 
 class ReferralLevel {
   final int level;
-  final int reward;
+  final int reward; // resolved total (fixed + percent-of-qualifying)
   final int count;
   final int earnings;
   final bool enabled;
-  final String type; // fixed | percent
-  final num value;
+  final bool fixedEnabled;
+  final num fixed;
+  final bool percentEnabled;
+  final num percent;
 
   const ReferralLevel({
     required this.level,
@@ -100,13 +102,19 @@ class ReferralLevel {
     required this.count,
     required this.earnings,
     this.enabled = true,
-    this.type = 'fixed',
-    this.value = 0,
+    this.fixedEnabled = false,
+    this.fixed = 0,
+    this.percentEnabled = false,
+    this.percent = 0,
   });
 
-  /// Human label for the level's configured reward, e.g. "100 BCP" or "10%".
-  String get rewardLabel =>
-      type == 'percent' ? '${value.toString()}%' : '$reward BCP';
+  /// Human label for the level's configured reward, e.g. "100 BCP + 10%".
+  String get rewardLabel {
+    final parts = <String>[];
+    if (fixedEnabled && fixed > 0) parts.add('${fixed.toInt()} BCP');
+    if (percentEnabled && percent > 0) parts.add('$percent%');
+    return parts.isEmpty ? '$reward BCP' : parts.join(' + ');
+  }
 
   factory ReferralLevel.fromJson(Map<String, dynamic> j) => ReferralLevel(
         level: (j['level'] as num?)?.toInt() ?? 1,
@@ -114,8 +122,10 @@ class ReferralLevel {
         count: (j['count'] as num?)?.toInt() ?? 0,
         earnings: (j['earnings'] as num?)?.toInt() ?? 0,
         enabled: j['enabled'] as bool? ?? true,
-        type: j['type'] as String? ?? 'fixed',
-        value: (j['value'] as num?) ?? 0,
+        fixedEnabled: j['fixed_enabled'] as bool? ?? false,
+        fixed: (j['fixed'] as num?) ?? 0,
+        percentEnabled: j['percent_enabled'] as bool? ?? false,
+        percent: (j['percent'] as num?) ?? 0,
       );
 }
 

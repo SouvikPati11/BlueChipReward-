@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Persisted light/dark/system theme selection.
+///
+/// First launch (no saved choice) ALWAYS defaults to Light — even when the
+/// Android system is in dark mode — per product requirement. Once the user
+/// picks a mode it is persisted and honoured thereafter.
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(ThemeMode.system) {
+  ThemeModeNotifier() : super(ThemeMode.light) {
     _load();
   }
 
@@ -20,11 +24,14 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
         case 'dark':
           state = ThemeMode.dark;
           break;
-        default:
+        case 'system':
           state = ThemeMode.system;
+          break;
+        default:
+          state = ThemeMode.light; // first launch → Light
       }
     } catch (_) {
-      // default stays system
+      // default stays Light
     }
   }
 

@@ -240,7 +240,7 @@ class _LevelBreakdown extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                          'Level ${l.level} · ${l.rewardLabel}${l.type == 'percent' ? ' (≈${l.reward} BCP)' : ' each'}',
+                          'Level ${l.level} · ${l.rewardLabel}${l.percentEnabled ? ' (≈${l.reward} BCP)' : ''}',
                           style:
                               const TextStyle(fontWeight: FontWeight.w700)),
                       Text(

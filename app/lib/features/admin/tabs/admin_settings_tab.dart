@@ -29,7 +29,6 @@ class AdminSettingsTab extends ConsumerWidget {
   static const Map<String, List<_Spec>> _categories = {
     'General': [
       _Spec('signup_bonus', 'Signup bonus (BCP)', SettingKind.number),
-      _Spec('currency_symbol', 'Display currency symbol', SettingKind.text),
       _Spec('maintenance_mode', 'Maintenance mode', SettingKind.toggle,
           'Pause earning (client hint)'),
     ],
@@ -41,14 +40,8 @@ class AdminSettingsTab extends ConsumerWidget {
       _Spec('withdrawal_fee_fixed', 'Fixed fee (payout currency)',
           SettingKind.number),
     ],
-    'Refer & Earn': [
-      _Spec('referral_system_enabled', 'Referral system enabled',
-          SettingKind.toggle),
-      _Spec('referral_qualifying_amount', 'Percent reward base (BCP)',
-          SettingKind.number, 'Percent levels pay this × the level %'),
-      _Spec('referral_levels', 'Referral levels', SettingKind.json,
-          'Array of {"enabled":true,"type":"fixed|percent","value":100}'),
-    ],
+    // Refer & Earn is managed by the dedicated card editor
+    // (Content → Referral levels), so it is intentionally not duplicated here.
     'Mining': [
       _Spec('mining_enabled', 'Mining enabled', SettingKind.toggle),
       _Spec('mining_rate_per_hour', 'Base mining rate (BCP/hour)',
@@ -74,9 +67,11 @@ class AdminSettingsTab extends ConsumerWidget {
           '[{"amount":10,"weight":40}, ...]'),
     ],
     'Ads & Rewards': [
-      _Spec('ads_system_enabled', 'Ads system (master)', SettingKind.toggle),
-      _Spec('banner_ads_enabled', 'Banner ads (master)', SettingKind.toggle),
-      _Spec('rewarded_ads_enabled', 'Rewarded ads (master)',
+      _Spec('ads_system_enabled', 'Reward ads', SettingKind.toggle,
+          'Master switch — OFF disables all rewarded ads'),
+      _Spec('banner_ads_enabled', 'Banner ads', SettingKind.toggle,
+          'Master switch — OFF disables all banner ads'),
+      _Spec('rewarded_ads_enabled', 'Rewarded ads (secondary master)',
           SettingKind.toggle),
       _Spec('ads_reward', 'Watch-ad reward (BCP)', SettingKind.number),
       _Spec('ads_daily_cap', 'Rewarded ads per day', SettingKind.number),
