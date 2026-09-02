@@ -58,7 +58,8 @@ class ManagePaymentMethodsScreen extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text('Min ${m['min_amount']} BCP • $fields field(s)',
+                    Text(
+                        'Min ${m['min_amount']} BCP • $fields field(s)\n${m['rate_base'] ?? 1000} BCP = ${m['currency'] ?? '₹'}${m['rate'] ?? 0}',
                         style: TextStyle(color: context.cx.textSecondary)),
                     const SizedBox(height: 6),
                     Row(
@@ -105,6 +106,10 @@ class ManagePaymentMethodsScreen extends ConsumerWidget {
     final name = TextEditingController(text: m?['name'] ?? '');
     final minAmount =
         TextEditingController(text: (m?['min_amount'] ?? 1000).toString());
+    final currency = TextEditingController(text: m?['currency'] ?? '₹');
+    final rate = TextEditingController(text: (m?['rate'] ?? 0).toString());
+    final rateBase =
+        TextEditingController(text: (m?['rate_base'] ?? 1000).toString());
     final fields = TextEditingController(
         text: const JsonEncoder.withIndent('  ')
             .convert(m?['fields'] ?? [
@@ -135,6 +140,36 @@ class ManagePaymentMethodsScreen extends ConsumerWidget {
                 TextField(controller: name, decoration: const InputDecoration(labelText: 'Name')),
                 const SizedBox(height: 10),
                 TextField(controller: minAmount, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Minimum (BCP)')),
+                const SizedBox(height: 10),
+                // Conversion rate: `rate` payout-currency units per `rate_base` BCP.
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 80,
+                      child: TextField(
+                          controller: currency,
+                          decoration:
+                              const InputDecoration(labelText: 'Currency')),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                          controller: rateBase,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                              labelText: 'BCP', helperText: 'per…')),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                          controller: rate,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          decoration: const InputDecoration(
+                              labelText: 'Amount', helperText: '= this')),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: fields,
@@ -178,6 +213,9 @@ class ManagePaymentMethodsScreen extends ConsumerWidget {
         'min_amount': int.tryParse(minAmount.text.trim()) ?? 0,
         'active': active,
         'position': m?['position'] ?? 0,
+        'currency': currency.text.trim().isEmpty ? '₹' : currency.text.trim(),
+        'rate': num.tryParse(rate.text.trim()) ?? 0,
+        'rate_base': int.tryParse(rateBase.text.trim()) ?? 1000,
       });
       ref.invalidate(adminPaymentMethodsProvider);
     } catch (e) {

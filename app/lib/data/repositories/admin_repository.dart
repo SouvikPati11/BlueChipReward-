@@ -270,6 +270,9 @@ class AdminRepository {
         'p_min_amount': m['min_amount'],
         'p_active': m['active'],
         'p_position': m['position'],
+        'p_currency': m['currency'],
+        'p_rate': m['rate'],
+        'p_rate_base': m['rate_base'],
       });
     } catch (e) {
       throw AppFailure.from(e);
