@@ -8,6 +8,7 @@ import '../../providers/auth_providers.dart';
 import 'tabs/admin_analytics_tab.dart';
 import 'tabs/admin_audit_tab.dart';
 import 'tabs/admin_content_tab.dart';
+import 'tabs/admin_contest_claims_tab.dart';
 import 'tabs/admin_referral_reviews_tab.dart';
 import 'tabs/admin_settings_tab.dart';
 import 'tabs/admin_tasks_tab.dart';
@@ -43,6 +44,7 @@ class _AdminHomeState extends ConsumerState<AdminHome> {
     _Section('Task reviews', Icons.fact_check_rounded, AdminTasksTab()),
     _Section('Referral reviews', Icons.report_gmailerrorred_rounded,
         AdminReferralReviewsTab()),
+    _Section('Contests', Icons.emoji_events_rounded, AdminContestClaimsTab()),
     _Section('Users', Icons.group_rounded, AdminUsersTab()),
     _Section('Content', Icons.dashboard_customize_rounded, AdminContentTab()),
     _Section('Config', Icons.tune_rounded, AdminSettingsTab()),

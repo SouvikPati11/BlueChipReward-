@@ -25,4 +25,6 @@ const earnMethods = <EarnMethod>[
       Color(0xFF8B5CF6), '/earn/quiz'),
   EarnMethod('Tasks', 'Complete & earn', Icons.checklist_rounded,
       AppColors.info, '/earn/tasks'),
+  EarnMethod('Contests', 'Hit targets, win BCP', Icons.emoji_events_rounded,
+      Color(0xFFF59E0B), '/contests'),
 ];

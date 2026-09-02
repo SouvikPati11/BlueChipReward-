@@ -109,6 +109,24 @@ class EarnRepository {
         if (nonce != null) 'p_nonce': nonce,
       });
 
+  // ---- Contests ------------------------------------------------------------
+  Future<List<Contest>> contests() async {
+    final res = await Db.client.rpc('contests_overview');
+    return (res as List)
+        .map((e) => Contest.fromJson((e as Map).cast<String, dynamic>()))
+        .toList();
+  }
+
+  Future<void> startContest(String contestId) =>
+      _rpc('start_contest', {'p_contest_id': contestId});
+
+  Future<Map<String, dynamic>> claimContest(String participationId,
+          {String? nonce}) =>
+      _rpc('claim_contest', {
+        'p_participation_id': participationId,
+        if (nonce != null) 'p_nonce': nonce,
+      });
+
   // ---- Invite milestones ---------------------------------------------------
   Future<InviteMilestonesOverview> inviteMilestones() async =>
       InviteMilestonesOverview.fromJson(await _rpc('invite_milestones_overview'));

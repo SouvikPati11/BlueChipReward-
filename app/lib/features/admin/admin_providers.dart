@@ -101,3 +101,13 @@ final adminAppLinksProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
   return ref.watch(adminRepositoryProvider).appLinks();
 });
+
+final adminContestsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(adminRepositoryProvider).contests();
+});
+
+final adminContestClaimsProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, status) {
+  return ref.watch(adminRepositoryProvider).contestClaims(status);
+});

@@ -417,6 +417,63 @@ class AdminRepository {
     }
   }
 
+  // ---- Contests ------------------------------------------------------------
+  Future<List<Map<String, dynamic>>> contests() async {
+    try {
+      final rows =
+          await Db.client.from('contests').select().order('position');
+      return (rows as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> saveContest(Map<String, dynamic> c) async {
+    try {
+      await Db.client.rpc('admin_save_contest', params: {
+        'p_id': c['id'],
+        'p_name': c['name'],
+        'p_target_type': c['target_type'],
+        'p_target_value': c['target_value'],
+        'p_reward': c['reward'],
+        'p_duration_hours': c['duration_hours'],
+        'p_requires_ad': c['requires_ad'],
+        'p_rules': c['rules'],
+        'p_active': c['active'],
+        'p_position': c['position'],
+      });
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> deleteContest(String id) async {
+    try {
+      await Db.client.rpc('admin_delete_contest', params: {'p_id': id});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> contestClaims(String status) async {
+    try {
+      final res = await Db.client
+          .rpc('admin_contest_claims', params: {'p_status': status});
+      return (res as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> resolveContestClaim(String id, bool approve) async {
+    try {
+      await Db.client.rpc('admin_resolve_contest_claim',
+          params: {'p_id': id, 'p_approve': approve});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
   // ---- Configurable links --------------------------------------------------
   Future<List<Map<String, dynamic>>> appLinks() async {
     try {

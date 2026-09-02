@@ -302,3 +302,89 @@ class AdsConfig {
 
   static AdsConfig get fallback => _default;
 }
+
+/// Contest system.
+class ContestParticipation {
+  final String id;
+  final String state; // active | claim_pending | completed | expired | rejected
+  final DateTime? startedAt;
+  final DateTime? endsAt;
+  final int progress;
+  final int targetValue;
+  final int reward;
+  final bool reached;
+  final bool claimable;
+
+  const ContestParticipation({
+    required this.id,
+    required this.state,
+    this.startedAt,
+    this.endsAt,
+    required this.progress,
+    required this.targetValue,
+    required this.reward,
+    required this.reached,
+    required this.claimable,
+  });
+
+  factory ContestParticipation.fromJson(Map<String, dynamic> j) =>
+      ContestParticipation(
+        id: j['id'] as String,
+        state: j['state'] as String? ?? 'active',
+        startedAt: j['started_at'] != null
+            ? DateTime.parse(j['started_at'] as String)
+            : null,
+        endsAt: j['ends_at'] != null
+            ? DateTime.parse(j['ends_at'] as String)
+            : null,
+        progress: (j['progress'] as num?)?.toInt() ?? 0,
+        targetValue: (j['target_value'] as num?)?.toInt() ?? 0,
+        reward: (j['reward'] as num?)?.toInt() ?? 0,
+        reached: j['reached'] as bool? ?? false,
+        claimable: j['claimable'] as bool? ?? false,
+      );
+
+  bool get isPending => state == 'claim_pending';
+}
+
+class Contest {
+  final String id;
+  final String name;
+  final String targetType; // bcp_earned | referral_count
+  final int targetValue;
+  final int reward;
+  final int durationHours;
+  final bool requiresAd;
+  final String? rules;
+  final ContestParticipation? participation;
+
+  const Contest({
+    required this.id,
+    required this.name,
+    required this.targetType,
+    required this.targetValue,
+    required this.reward,
+    required this.durationHours,
+    required this.requiresAd,
+    this.rules,
+    this.participation,
+  });
+
+  String get targetLabel =>
+      targetType == 'referral_count' ? 'referrals' : 'BCP earned';
+
+  factory Contest.fromJson(Map<String, dynamic> j) => Contest(
+        id: j['id'] as String,
+        name: j['name'] as String? ?? 'Contest',
+        targetType: j['target_type'] as String? ?? 'bcp_earned',
+        targetValue: (j['target_value'] as num?)?.toInt() ?? 0,
+        reward: (j['reward'] as num?)?.toInt() ?? 0,
+        durationHours: (j['duration_hours'] as num?)?.toInt() ?? 168,
+        requiresAd: j['requires_ad'] as bool? ?? false,
+        rules: j['rules'] as String?,
+        participation: j['participation'] != null
+            ? ContestParticipation.fromJson(
+                (j['participation'] as Map).cast<String, dynamic>())
+            : null,
+      );
+}

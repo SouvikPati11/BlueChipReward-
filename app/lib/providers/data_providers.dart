@@ -55,6 +55,10 @@ final adsConfigProvider = FutureProvider<AdsConfig>((ref) {
   return ref.watch(earnRepositoryProvider).adsConfig();
 });
 
+final contestsProvider = FutureProvider.autoDispose<List<Contest>>((ref) {
+  return ref.watch(earnRepositoryProvider).contests();
+});
+
 final quizProvider = FutureProvider.autoDispose<DailyQuiz>((ref) {
   return ref.watch(earnRepositoryProvider).quizToday();
 });
