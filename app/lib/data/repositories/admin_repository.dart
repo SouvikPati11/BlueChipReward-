@@ -52,6 +52,16 @@ class AdminRepository {
     }
   }
 
+  Future<List<Map<String, dynamic>>> taskSubmissions(String status) async {
+    try {
+      final res = await Db.client
+          .rpc('admin_task_submissions', params: {'p_status': status});
+      return (res as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
   Future<void> reviewTask(String completionId, bool approve,
       {String? notes}) async {
     try {
@@ -162,6 +172,9 @@ class AdminRepository {
         'p_auto_verify': t['auto_verify'],
         'p_active': t['active'],
         'p_position': t['position'],
+        'p_proof_method': t['proof_method'] ?? 'none',
+        'p_proof_instruction': t['proof_instruction'],
+        'p_requires_ad': t['requires_ad'] ?? false,
       });
     } catch (e) {
       throw AppFailure.from(e);

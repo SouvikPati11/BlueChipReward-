@@ -162,6 +162,9 @@ class TaskItem {
   final String? instructions;
   final bool autoVerify;
   final String? completionState; // null = not attempted
+  final String proofMethod; // none | screenshot | text
+  final String? proofInstruction;
+  final bool requiresAd;
 
   const TaskItem({
     required this.id,
@@ -173,6 +176,9 @@ class TaskItem {
     this.instructions,
     required this.autoVerify,
     this.completionState,
+    this.proofMethod = 'none',
+    this.proofInstruction,
+    this.requiresAd = false,
   });
 
   factory TaskItem.fromJson(Map<String, dynamic> j) => TaskItem(
@@ -185,6 +191,9 @@ class TaskItem {
         instructions: j['instructions'] as String?,
         autoVerify: j['auto_verify'] as bool? ?? false,
         completionState: j['completion_state'] as String?,
+        proofMethod: j['proof_method'] as String? ?? 'none',
+        proofInstruction: j['proof_instruction'] as String?,
+        requiresAd: j['requires_ad'] as bool? ?? false,
       );
 
   bool get isDone =>

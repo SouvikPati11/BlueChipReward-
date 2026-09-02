@@ -139,9 +139,13 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
       TextEditingController(text: widget.task?['action_url'] ?? '');
   late final _instructions =
       TextEditingController(text: widget.task?['instructions'] ?? '');
+  late final _proofInstruction = TextEditingController(
+      text: widget.task?['proof_instruction'] ?? '');
   String _type = 'link_visit';
   bool _autoVerify = true;
   bool _active = true;
+  bool _requiresAd = false;
+  String _proofMethod = 'none';
   bool _saving = false;
 
   @override
@@ -154,12 +158,14 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
       if (_type == 'invite') _type = 'custom';
       _autoVerify = widget.task!['auto_verify'] ?? true;
       _active = widget.task!['active'] ?? true;
+      _requiresAd = widget.task!['requires_ad'] ?? false;
+      _proofMethod = widget.task!['proof_method'] ?? 'none';
     }
   }
 
   @override
   void dispose() {
-    for (final c in [_title, _desc, _reward, _url, _instructions]) {
+    for (final c in [_title, _desc, _reward, _url, _instructions, _proofInstruction]) {
       c.dispose();
     }
     super.dispose();
@@ -180,6 +186,11 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
         'auto_verify': _autoVerify,
         'active': _active,
         'position': widget.task?['position'] ?? 0,
+        'proof_method': _autoVerify ? 'none' : _proofMethod,
+        'proof_instruction': _proofInstruction.text.trim().isEmpty
+            ? null
+            : _proofInstruction.text.trim(),
+        'requires_ad': _requiresAd,
       });
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -230,6 +241,39 @@ class _TaskFormState extends ConsumerState<_TaskForm> {
               value: _autoVerify,
               onChanged: (v) => setState(() => _autoVerify = v),
               title: const Text('Auto-verify (reward immediately)'),
+              contentPadding: EdgeInsets.zero,
+            ),
+            // Proof method only applies when NOT auto-verified.
+            if (!_autoVerify) ...[
+              DropdownButtonFormField<String>(
+                value: _proofMethod == 'none' ? 'screenshot' : _proofMethod,
+                decoration: const InputDecoration(labelText: 'Proof method'),
+                items: const [
+                  DropdownMenuItem(
+                      value: 'screenshot', child: Text('Screenshot upload')),
+                  DropdownMenuItem(
+                      value: 'text', child: Text('Username / Link (text)')),
+                ],
+                onChanged: (v) =>
+                    setState(() => _proofMethod = v ?? 'screenshot'),
+              ),
+              if (_proofMethod == 'text') ...[
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _proofInstruction,
+                  decoration: const InputDecoration(
+                    labelText: 'Instruction shown to the user',
+                    helperText:
+                        'e.g. "Your Instagram username", "Telegram channel link"',
+                  ),
+                ),
+              ],
+              const SizedBox(height: 4),
+            ],
+            SwitchListTile(
+              value: _requiresAd,
+              onChanged: (v) => setState(() => _requiresAd = v),
+              title: const Text('Require a rewarded ad'),
               contentPadding: EdgeInsets.zero,
             ),
             SwitchListTile(

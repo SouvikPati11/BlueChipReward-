@@ -102,8 +102,12 @@ class EarnRepository {
   }
 
   Future<Map<String, dynamic>> submitTask(String taskId,
-          {Map<String, dynamic>? proof}) =>
-      _rpc('submit_task', {'p_task_id': taskId, 'p_proof': proof ?? {}});
+          {Map<String, dynamic>? proof, String? nonce}) =>
+      _rpc('submit_task', {
+        'p_task_id': taskId,
+        'p_proof': proof ?? {},
+        if (nonce != null) 'p_nonce': nonce,
+      });
 
   // ---- Invite milestones ---------------------------------------------------
   Future<InviteMilestonesOverview> inviteMilestones() async =>

@@ -87,6 +87,11 @@ final adminInviteClaimsProvider = FutureProvider.autoDispose
   return ref.watch(adminRepositoryProvider).inviteClaims(status);
 });
 
+final adminTaskSubmissionsProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, status) {
+  return ref.watch(adminRepositoryProvider).taskSubmissions(status);
+});
+
 final adminInviteMilestonesProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
   return ref.watch(adminRepositoryProvider).inviteMilestones();
