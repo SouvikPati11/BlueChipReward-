@@ -110,6 +110,12 @@ class ManagePaymentMethodsScreen extends ConsumerWidget {
     final rate = TextEditingController(text: (m?['rate'] ?? 0).toString());
     final rateBase =
         TextEditingController(text: (m?['rate_base'] ?? 1000).toString());
+    final feePercent =
+        TextEditingController(text: (m?['fee_percent'] ?? 0).toString());
+    final feeFixed =
+        TextEditingController(text: (m?['fee_fixed'] ?? 0).toString());
+    bool feeEnabled = m?['fee_enabled'] ?? false;
+    String feeType = (m?['fee_type'] as String?) ?? 'percent';
     final fields = TextEditingController(
         text: const JsonEncoder.withIndent('  ')
             .convert(m?['fields'] ?? [
@@ -180,6 +186,51 @@ class ManagePaymentMethodsScreen extends ConsumerWidget {
                   ),
                 ),
                 SwitchListTile(
+                  value: feeEnabled,
+                  onChanged: (v) => setState(() => feeEnabled = v),
+                  title: const Text('Withdrawal fee'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                if (feeEnabled) ...[
+                  DropdownButtonFormField<String>(
+                    value: feeType,
+                    decoration: const InputDecoration(labelText: 'Fee type'),
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'percent', child: Text('Percentage')),
+                      DropdownMenuItem(value: 'fixed', child: Text('Fixed')),
+                      DropdownMenuItem(
+                          value: 'both', child: Text('Percentage + Fixed')),
+                    ],
+                    onChanged: (v) => setState(() => feeType = v ?? 'percent'),
+                  ),
+                  Row(
+                    children: [
+                      if (feeType == 'percent' || feeType == 'both')
+                        Expanded(
+                          child: TextField(
+                              controller: feePercent,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              decoration:
+                                  const InputDecoration(labelText: 'Fee %')),
+                        ),
+                      if (feeType == 'both') const SizedBox(width: 10),
+                      if (feeType == 'fixed' || feeType == 'both')
+                        Expanded(
+                          child: TextField(
+                              controller: feeFixed,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              decoration: const InputDecoration(
+                                  labelText: 'Fixed fee (currency)')),
+                        ),
+                    ],
+                  ),
+                ],
+                SwitchListTile(
                   value: active,
                   onChanged: (v) => setState(() => active = v),
                   title: const Text('Active'),
@@ -216,6 +267,10 @@ class ManagePaymentMethodsScreen extends ConsumerWidget {
         'currency': currency.text.trim().isEmpty ? '₹' : currency.text.trim(),
         'rate': num.tryParse(rate.text.trim()) ?? 0,
         'rate_base': int.tryParse(rateBase.text.trim()) ?? 1000,
+        'fee_enabled': feeEnabled,
+        'fee_type': feeType,
+        'fee_percent': num.tryParse(feePercent.text.trim()) ?? 0,
+        'fee_fixed': num.tryParse(feeFixed.text.trim()) ?? 0,
       });
       ref.invalidate(adminPaymentMethodsProvider);
     } catch (e) {

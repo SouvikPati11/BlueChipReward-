@@ -33,12 +33,9 @@ class AdminSettingsTab extends ConsumerWidget {
           'Pause earning (client hint)'),
     ],
     'Withdrawal': [
-      _Spec('withdrawal_min', 'Minimum withdrawal (BCP)', SettingKind.number),
-      _Spec('withdrawal_fee_enabled', 'Charge withdrawal fee',
-          SettingKind.toggle),
-      _Spec('withdrawal_fee_percent', 'Withdrawal fee (%)', SettingKind.percent),
-      _Spec('withdrawal_fee_fixed', 'Fixed fee (payout currency)',
-          SettingKind.number),
+      _Spec('withdrawal_min', 'Global minimum withdrawal (BCP)',
+          SettingKind.number,
+          'Per-method minimum, rate & fee are set under Content → Payment methods'),
     ],
     // Refer & Earn is managed by the dedicated card editor
     // (Content → Referral levels), so it is intentionally not duplicated here.
@@ -56,6 +53,12 @@ class AdminSettingsTab extends ConsumerWidget {
       _Spec('mining_boost_compounding', 'Boosts compound', SettingKind.toggle),
       _Spec('mining_boost_requires_ad', 'Boost requires rewarded ad',
           SettingKind.toggle),
+      _Spec('mining_enabled', 'Mining enabled', SettingKind.toggle),
+      _Spec('mining_start_requires_ad', 'Start requires rewarded ad',
+          SettingKind.toggle),
+      _Spec('mining_claim_requires_ad', 'Claim requires rewarded ad',
+          SettingKind.toggle),
+      _Spec('mining_max_claims', 'Max claims per session', SettingKind.number),
     ],
     'Daily Reward': [
       _Spec('daily_reward_days', 'Day-wise rewards (7-day cycle)',
@@ -63,8 +66,8 @@ class AdminSettingsTab extends ConsumerWidget {
     ],
     'Scratch Card': [
       _Spec('scratch_daily_cap', 'Cards per day', SettingKind.number),
-      _Spec('scratch_rewards', 'Weighted rewards', SettingKind.json,
-          '[{"amount":10,"weight":40}, ...]'),
+      _Spec('scratch_cards_config', 'Per-card reward ranges', SettingKind.json,
+          '[{"enabled":true,"min":50,"max":100}, ...] — one entry per card'),
     ],
     'Ads & Rewards': [
       _Spec('ads_system_enabled', 'Reward ads', SettingKind.toggle,
@@ -74,9 +77,13 @@ class AdminSettingsTab extends ConsumerWidget {
       _Spec('rewarded_ads_enabled', 'Rewarded ads (secondary master)',
           SettingKind.toggle),
       _Spec('ads_reward', 'Watch-ad reward (BCP)', SettingKind.number),
-      _Spec('ads_daily_cap', 'Rewarded ads per day', SettingKind.number),
+      _Spec('rewarded_daily_cap', 'Completed rewarded ads / day (all sections)',
+          SettingKind.number),
+      _Spec('ads_daily_cap', 'Watch-Ads rewards per day', SettingKind.number),
       _Spec('ads_min_gap_seconds', 'Min seconds between ads',
           SettingKind.number),
+      _Spec('ad_gate_contest', 'Contest · rewarded required',
+          SettingKind.toggle),
       // Rewarded per section
       _Spec('ad_gate_daily', 'Daily · rewarded required', SettingKind.toggle),
       _Spec('ad_gate_scratch', 'Scratch · rewarded required',

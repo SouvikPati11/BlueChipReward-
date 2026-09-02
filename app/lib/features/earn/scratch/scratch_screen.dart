@@ -28,6 +28,7 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
   int? _amount;
   int _remaining = 0;
   String? _error;
+  List<Map<String, dynamic>> _ranges = const [];
 
   @override
   void initState() {
@@ -43,7 +44,16 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
       _error = null;
     });
     try {
-      final res = await ref.read(earnRepositoryProvider).scratchStatus();
+      final repo = ref.read(earnRepositoryProvider);
+      // Show the configured per-card reward ranges (server-authoritative).
+      try {
+        final cfg = await repo.scratchConfig();
+        _ranges = ((cfg['cards'] as List?) ?? const [])
+            .map((e) => (e as Map).cast<String, dynamic>())
+            .where((c) => c['enabled'] != false)
+            .toList();
+      } catch (_) {}
+      final res = await repo.scratchStatus();
       setState(() {
         _cardId = res['card_id'] as String?;
         _remaining = (res['remaining_today'] as num?)?.toInt() ?? 0;
@@ -101,6 +111,20 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
                               color: context.cx.textSecondary, fontSize: 15),
                           textAlign: TextAlign.center,
                         ),
+                        if (_ranges.isNotEmpty) ...[
+                          const SizedBox(height: 14),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.center,
+                            children: [
+                              for (var i = 0; i < _ranges.length; i++)
+                                Pill(
+                                    'Card ${i + 1}: ${_ranges[i]['min']}–${_ranges[i]['max']} BCP',
+                                    color: AppColors.gold),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 24),
                         Expanded(
                           child: Center(

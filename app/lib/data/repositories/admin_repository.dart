@@ -273,6 +273,10 @@ class AdminRepository {
         'p_currency': m['currency'],
         'p_rate': m['rate'],
         'p_rate_base': m['rate_base'],
+        'p_fee_enabled': m['fee_enabled'],
+        'p_fee_type': m['fee_type'],
+        'p_fee_percent': m['fee_percent'],
+        'p_fee_fixed': m['fee_fixed'],
       });
     } catch (e) {
       throw AppFailure.from(e);

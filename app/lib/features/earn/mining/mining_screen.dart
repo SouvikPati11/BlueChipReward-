@@ -52,10 +52,12 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
     return (accrued - (s.accrued - s.claimable)).clamp(0, accrued);
   }
 
-  Future<void> _start() async {
+  Future<void> _start(MiningStatus s) async {
     setState(() => _busy = true);
     try {
-      await ref.read(earnRepositoryProvider).startMining();
+      String? nonce;
+      if (s.startRequiresAd) nonce = await runRewardedGate(ref, 'mining');
+      await ref.read(earnRepositoryProvider).startMining(nonce: nonce);
       ref.invalidate(miningStatusProvider);
     } catch (e) {
       if (mounted) showSnack(context, '$e', error: true);
@@ -85,10 +87,13 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
     }
   }
 
-  Future<void> _claim() async {
+  Future<void> _claim(MiningStatus s) async {
     setState(() => _busy = true);
     try {
-      final res = await ref.read(earnRepositoryProvider).claimMining();
+      String? nonce;
+      if (s.claimRequiresAd) nonce = await runRewardedGate(ref, 'mining');
+      final res =
+          await ref.read(earnRepositoryProvider).claimMining(nonce: nonce);
       ref.invalidate(miningStatusProvider);
       ref.invalidate(walletProvider);
       ref.invalidate(transactionsProvider);
@@ -162,16 +167,25 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
                         const Divider(height: 22),
                         _infoRow(Icons.savings_rounded, 'Claimable now',
                             '$claimable BCP'),
+                        const Divider(height: 22),
+                        _infoRow(Icons.confirmation_number_outlined,
+                            'Claims left', '${s.claimsRemaining} / ${s.maxClaims}'),
                       ],
                     ),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
-                    onPressed: (_busy || claimable <= 0) ? null : _claim,
+                    onPressed: (_busy || claimable <= 0 || s.claimsRemaining <= 0)
+                        ? null
+                        : () => _claim(s),
                     icon: const Icon(Icons.download_rounded),
-                    label: Text(claimable > 0
-                        ? 'Claim $claimable BCP'
-                        : 'Nothing to claim yet'),
+                    label: Text(s.claimsRemaining <= 0
+                        ? 'Claim limit reached'
+                        : claimable <= 0
+                            ? 'Nothing to claim yet'
+                            : s.claimRequiresAd
+                                ? 'Watch ad & claim $claimable BCP'
+                                : 'Claim $claimable BCP'),
                   ),
                   if (!s.completed) ...[
                     const SizedBox(height: 16),
@@ -184,7 +198,7 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
                   if (s.completed) ...[
                     const SizedBox(height: 10),
                     OutlinedButton.icon(
-                      onPressed: _busy ? null : _start,
+                      onPressed: _busy ? null : () => _start(s),
                       icon: const Icon(Icons.refresh_rounded),
                       label: const Text('Start a new session'),
                     ),
@@ -203,7 +217,7 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
-                    onPressed: _busy ? null : _start,
+                    onPressed: (_busy || !s.enabled) ? null : () => _start(s),
                     icon: _busy
                         ? const SizedBox(
                             height: 20,
@@ -211,7 +225,11 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
                             child: CircularProgressIndicator(
                                 strokeWidth: 2.2, color: Colors.white))
                         : const Icon(Icons.bolt_rounded),
-                    label: const Text('Start mining'),
+                    label: Text(!s.enabled
+                        ? 'Mining is disabled'
+                        : s.startRequiresAd
+                            ? 'Watch ad & start mining'
+                            : 'Start mining'),
                   ),
                 ],
                 const SizedBox(height: 14),

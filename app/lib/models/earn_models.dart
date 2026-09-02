@@ -49,6 +49,11 @@ class MiningStatus {
   final bool canBoost;
   final DateTime? nextBoostAt;
   final bool boostRequiresAd;
+  final bool startRequiresAd;
+  final bool claimRequiresAd;
+  final int maxClaims;
+  final int claimsRemaining;
+  final bool enabled;
 
   const MiningStatus({
     required this.active,
@@ -67,6 +72,11 @@ class MiningStatus {
     this.canBoost = false,
     this.nextBoostAt,
     this.boostRequiresAd = true,
+    this.startRequiresAd = false,
+    this.claimRequiresAd = false,
+    this.maxClaims = 5,
+    this.claimsRemaining = 5,
+    this.enabled = true,
   });
 
   factory MiningStatus.fromJson(Map<String, dynamic> j) => MiningStatus(
@@ -92,6 +102,12 @@ class MiningStatus {
             ? DateTime.parse(j['next_boost_at'] as String)
             : null,
         boostRequiresAd: j['boost_requires_ad'] as bool? ?? true,
+        startRequiresAd: j['start_requires_ad'] as bool? ?? false,
+        claimRequiresAd: j['claim_requires_ad'] as bool? ?? false,
+        maxClaims: (j['max_claims'] as num?)?.toInt() ?? 5,
+        claimsRemaining: (j['claims_remaining'] as num?)?.toInt() ??
+            ((j['max_claims'] as num?)?.toInt() ?? 5),
+        enabled: j['enabled'] as bool? ?? true,
       );
 }
 

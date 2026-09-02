@@ -29,12 +29,16 @@ class EarnRepository {
   Future<MiningStatus> miningStatus() async =>
       MiningStatus.fromJson(await _rpc('mining_status'));
 
-  Future<Map<String, dynamic>> startMining() => _rpc('start_mining');
+  Future<Map<String, dynamic>> startMining({String? nonce}) =>
+      _rpc('start_mining', {if (nonce != null) 'p_nonce': nonce});
 
-  Future<Map<String, dynamic>> claimMining() => _rpc('claim_mining');
+  Future<Map<String, dynamic>> claimMining({String? nonce}) =>
+      _rpc('claim_mining', {if (nonce != null) 'p_nonce': nonce});
 
   // ---- Scratch -------------------------------------------------------------
   Future<Map<String, dynamic>> scratchStatus() => _rpc('scratch_status');
+
+  Future<Map<String, dynamic>> scratchConfig() => _rpc('scratch_config');
 
   Future<Map<String, dynamic>> scratchReveal(String cardId, {String? nonce}) =>
       _rpc('scratch_reveal',
