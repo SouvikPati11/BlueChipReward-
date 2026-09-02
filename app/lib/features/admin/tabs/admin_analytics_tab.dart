@@ -22,6 +22,7 @@ class AdminAnalyticsTab extends ConsumerWidget {
     'task': 'Tasks',
     'referral': 'Referral',
     'invite_milestone': 'Invite milestone',
+    'contest': 'Contest',
     'signup_bonus': 'Signup bonus',
     'admin_adjustment': 'Admin adjustment',
   };
@@ -99,6 +100,8 @@ class AdminAnalyticsTab extends ConsumerWidget {
               final ads = (d['ads'] as Map?)?.cast<String, dynamic>() ?? {};
               final features =
                   (d['features'] as Map?)?.cast<String, dynamic>() ?? {};
+              final contests =
+                  (d['contests'] as Map?)?.cast<String, dynamic>() ?? {};
               return RefreshIndicator(
                 onRefresh: () async {
                   ref.invalidate(adminAnalyticsProvider);
@@ -162,6 +165,30 @@ class AdminAnalyticsTab extends ConsumerWidget {
                             if (entry.key != _featureLabels.keys.last)
                               const Divider(height: 18),
                           ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text('Contests',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 10),
+                    SectionCard(
+                      child: Column(
+                        children: [
+                          _row(context, 'Joined (in range)',
+                              _n(contests['started'])),
+                          const Divider(height: 18),
+                          _row(context, 'Active now', _n(contests['active'])),
+                          const Divider(height: 18),
+                          _row(context, 'Awaiting review',
+                              _n(contests['claim_pending'])),
+                          const Divider(height: 18),
+                          _row(context, 'Completed (in range)',
+                              _n(contests['completed'])),
+                          const Divider(height: 18),
+                          _row(context, 'Rejected (in range)',
+                              _n(contests['rejected'])),
                         ],
                       ),
                     ),

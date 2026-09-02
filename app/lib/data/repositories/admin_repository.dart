@@ -103,6 +103,42 @@ class AdminRepository {
     }
   }
 
+  /// §29/§30 — send a custom notification now. [target] is 'all' or 'specific';
+  /// [userIds] is required when target == 'specific'.
+  Future<int> sendNotification(String title, String body,
+      {String target = 'all', List<String>? userIds}) async {
+    try {
+      final res = await Db.client.rpc('admin_send_notification', params: {
+        'p_title': title,
+        'p_body': body,
+        'p_target': target,
+        'p_user_ids': userIds,
+      });
+      return (res is Map ? (res['recipients'] as num?)?.toInt() : null) ?? 0;
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> notificationHistory() async {
+    try {
+      final res = await Db.client.rpc('admin_notification_history');
+      return (res as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> userOptions({String? search}) async {
+    try {
+      final res = await Db.client
+          .rpc('admin_user_options', params: {'p_search': search});
+      return (res as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
   Future<void> adjustBalance(String userId, int amount, String reason) async {
     try {
       await Db.client.rpc('admin_adjust_balance', params: {

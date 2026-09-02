@@ -6,6 +6,7 @@ import 'package:bluechip_rewards/core/theme/app_palette.dart';
 import '../../../core/widgets/common.dart';
 import '../manage/manage_links.dart';
 import '../manage/manage_milestones.dart';
+import '../manage/manage_notifications.dart';
 import '../manage/manage_payment_methods.dart';
 import '../manage/manage_quizzes.dart';
 import '../manage/manage_referral.dart';
@@ -37,6 +38,12 @@ class AdminContentTab extends ConsumerWidget {
         _tile(context, Icons.emoji_events_rounded, 'Invite milestones',
             'Reward users for reaching referral counts',
             const ManageMilestonesScreen()),
+        const SizedBox(height: 12),
+        const SizedBox(height: 12),
+        _tile(context, Icons.notifications_active_rounded,
+            'Custom notifications',
+            'Compose and send push/in-app notifications; view history',
+            const ManageNotificationsScreen()),
         const SizedBox(height: 12),
         _tile(context, Icons.link_rounded, 'Links',
             'Support, social and page links shown in the app',
