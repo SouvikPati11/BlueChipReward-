@@ -87,7 +87,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Daily Quiz')),
-      bottomNavigationBar: const BannerAdBar(),
+      bottomNavigationBar: const BannerAdBar(placement: 'quiz'),
       body: SafeArea(
         top: false,
         child: quizAsync.when(

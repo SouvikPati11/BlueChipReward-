@@ -49,6 +49,18 @@ class WalletRepository {
     }
   }
 
+  /// Server-authoritative conversion + fee quote for the withdraw screen.
+  Future<Map<String, dynamic>> withdrawalQuote(
+      String methodKey, int amount) async {
+    try {
+      final res = await Db.client.rpc('withdrawal_quote',
+          params: {'p_method_key': methodKey, 'p_amount': amount});
+      return (res as Map).cast<String, dynamic>();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
   Future<List<Withdrawal>> fetchWithdrawals() async {
     try {
       final uid = Db.uid!;

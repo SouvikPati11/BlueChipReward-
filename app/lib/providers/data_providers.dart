@@ -49,6 +49,12 @@ final inviteMilestonesProvider =
   return ref.watch(earnRepositoryProvider).inviteMilestones();
 });
 
+/// Effective ad configuration (global + per-section). Kept alive so earning
+/// screens and banners share one fetch.
+final adsConfigProvider = FutureProvider<AdsConfig>((ref) {
+  return ref.watch(earnRepositoryProvider).adsConfig();
+});
+
 final quizProvider = FutureProvider.autoDispose<DailyQuiz>((ref) {
   return ref.watch(earnRepositoryProvider).quizToday();
 });

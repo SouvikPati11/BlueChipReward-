@@ -32,6 +32,13 @@ class _WatchAdsScreenState extends ConsumerState<WatchAdsScreen> {
       // A completed-ad nonce is mandatory for watch-ads (the reward exists only
       // because an ad was watched). runRewardedGate throws if not completed.
       final nonce = await runRewardedGate(ref, 'watch_ads');
+      if (nonce == null) {
+        if (mounted) {
+          showSnack(context, 'Watch Ads is currently unavailable.',
+              error: true);
+        }
+        return;
+      }
       // Server decides the reward and enforces limits.
       final res = await ref.read(earnRepositoryProvider).rewardAd(nonce);
       ref.invalidate(walletProvider);
@@ -51,7 +58,7 @@ class _WatchAdsScreenState extends ConsumerState<WatchAdsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Watch Ads')),
-      bottomNavigationBar: const BannerAdBar(),
+      bottomNavigationBar: const BannerAdBar(placement: 'watch_ads'),
       body: SafeArea(
         top: false,
         child: ListView(

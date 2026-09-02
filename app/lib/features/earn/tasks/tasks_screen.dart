@@ -58,7 +58,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Tasks')),
-      bottomNavigationBar: const BannerAdBar(),
+      bottomNavigationBar: const BannerAdBar(placement: 'tasks'),
       body: SafeArea(
         top: false,
         child: tasksAsync.when(

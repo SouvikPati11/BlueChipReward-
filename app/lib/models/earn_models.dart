@@ -242,3 +242,54 @@ class InviteMilestonesOverview {
             .toList(),
       );
 }
+
+/// Effective ad configuration (global + per-section) from ads_config().
+class AdsSectionConfig {
+  final bool rewarded;
+  final bool banner;
+  const AdsSectionConfig({required this.rewarded, required this.banner});
+  factory AdsSectionConfig.fromJson(Map<String, dynamic> j) => AdsSectionConfig(
+        rewarded: j['rewarded'] as bool? ?? true,
+        banner: j['banner'] as bool? ?? true,
+      );
+}
+
+class AdsConfig {
+  final bool system;
+  final bool rewardedGlobal;
+  final bool bannerGlobal;
+  final Map<String, AdsSectionConfig> sections;
+  const AdsConfig({
+    required this.system,
+    required this.rewardedGlobal,
+    required this.bannerGlobal,
+    required this.sections,
+  });
+
+  static const _default = AdsConfig(
+      system: true, rewardedGlobal: true, bannerGlobal: true, sections: {});
+
+  AdsSectionConfig section(String key) =>
+      sections[key] ??
+      const AdsSectionConfig(rewarded: true, banner: true);
+
+  bool rewardedFor(String key) => system && rewardedGlobal && section(key).rewarded;
+  bool bannerFor(String key) => system && bannerGlobal && section(key).banner;
+
+  factory AdsConfig.fromJson(Map<String, dynamic> j) {
+    final secs = <String, AdsSectionConfig>{};
+    final raw = (j['sections'] as Map?)?.cast<String, dynamic>() ?? {};
+    for (final e in raw.entries) {
+      secs[e.key] =
+          AdsSectionConfig.fromJson((e.value as Map).cast<String, dynamic>());
+    }
+    return AdsConfig(
+      system: j['system'] as bool? ?? true,
+      rewardedGlobal: j['rewarded_global'] as bool? ?? true,
+      bannerGlobal: j['banner_global'] as bool? ?? true,
+      sections: secs,
+    );
+  }
+
+  static AdsConfig get fallback => _default;
+}

@@ -25,6 +25,8 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
   final Map<String, TextEditingController> _fieldCtrls = {};
   PaymentMethod? _method;
   bool _submitting = false;
+  Map<String, dynamic>? _quote;
+  int _quoteSeq = 0;
 
   @override
   void dispose() {
@@ -37,6 +39,24 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
 
   TextEditingController _ctrl(String key) =>
       _fieldCtrls.putIfAbsent(key, () => TextEditingController());
+
+  /// Fetch the server-authoritative conversion + fee breakdown.
+  Future<void> _refreshQuote() async {
+    final amount = int.tryParse(_amount.text.trim()) ?? 0;
+    if (_method == null || amount <= 0) {
+      setState(() => _quote = null);
+      return;
+    }
+    final seq = ++_quoteSeq;
+    try {
+      final q = await ref
+          .read(walletRepositoryProvider)
+          .withdrawalQuote(_method!.key, amount);
+      if (mounted && seq == _quoteSeq) setState(() => _quote = q);
+    } catch (_) {
+      if (mounted && seq == _quoteSeq) setState(() => _quote = null);
+    }
+  }
 
   Future<void> _submit(int balance, int minAmount) async {
     if (!_form.currentState!.validate() || _method == null) return;
@@ -123,6 +143,7 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                         hintText: 'Min ${_method?.minAmount ?? 1000}',
                         prefixIcon: const Icon(Icons.numbers_rounded),
                       ),
+                      onChanged: (_) => _refreshQuote(),
                       validator: (v) {
                         final a = int.tryParse(v ?? '') ?? 0;
                         if (a <= 0) return 'Enter an amount';
@@ -140,7 +161,10 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                     ...methods.map((m) => RadioListTile<PaymentMethod>(
                           value: m,
                           groupValue: _method,
-                          onChanged: (v) => setState(() => _method = v),
+                          onChanged: (v) {
+                            setState(() => _method = v);
+                            _refreshQuote();
+                          },
                           title: Text(m.name),
                           subtitle: Text('Min ${m.minAmount} BCP'),
                           shape: RoundedRectangleBorder(
@@ -171,6 +195,10 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                                 : null,
                           ),
                         ),
+                    ],
+                    if (_quote != null) ...[
+                      const SizedBox(height: 16),
+                      _QuoteCard(quote: _quote!),
                     ],
                     const SizedBox(height: 12),
                     SectionCard(
@@ -210,6 +238,73 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
             },
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Server-authoritative conversion + fee breakdown.
+class _QuoteCard extends StatelessWidget {
+  final Map<String, dynamic> quote;
+  const _QuoteCard({required this.quote});
+
+  String _money(String cur, num v) {
+    final s = v.toStringAsFixed(2);
+    return '$cur$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cur = quote['currency'] as String? ?? '';
+    final bcp = (quote['bcp'] as num?)?.toInt() ?? 0;
+    final rate = (quote['rate'] as num?) ?? 0;
+    final rateBase = (quote['rate_base'] as num?)?.toInt() ?? 1000;
+    final gross = (quote['gross'] as num?) ?? 0;
+    final feeEnabled = quote['fee_enabled'] as bool? ?? false;
+    final fee = (quote['fee'] as num?) ?? 0;
+    final net = (quote['net'] as num?) ?? 0;
+
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('You will receive',
+              style: TextStyle(
+                  color: context.cx.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(_money(cur, net),
+              style: const TextStyle(
+                  fontSize: 26, fontWeight: FontWeight.w900)),
+          const SizedBox(height: 12),
+          _row(context, 'Rate', '$rateBase BCP = ${_money(cur, rate)}'),
+          _row(context, 'Amount', '$bcp BCP'),
+          _row(context, 'Gross', _money(cur, gross)),
+          _row(context, feeEnabled ? 'Fee' : 'Fee (none)',
+              feeEnabled ? '- ${_money(cur, fee)}' : _money(cur, 0)),
+          Divider(height: 18, color: context.cx.border),
+          _row(context, 'Final amount', _money(cur, net), bold: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(BuildContext context, String k, String v, {bool bold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Expanded(
+              child: Text(k,
+                  style: TextStyle(
+                      color: context.cx.textSecondary,
+                      fontWeight: bold ? FontWeight.w800 : FontWeight.w500))),
+          Text(v,
+              style: TextStyle(
+                  fontWeight: bold ? FontWeight.w900 : FontWeight.w700,
+                  fontSize: bold ? 15 : 14)),
+        ],
       ),
     );
   }

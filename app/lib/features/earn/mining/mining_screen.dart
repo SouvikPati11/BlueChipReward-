@@ -112,7 +112,7 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mining')),
-      bottomNavigationBar: const BannerAdBar(),
+      bottomNavigationBar: const BannerAdBar(placement: 'mining'),
       body: SafeArea(
         top: false,
         child: statusAsync.when(

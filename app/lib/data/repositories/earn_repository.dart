@@ -41,6 +41,9 @@ class EarnRepository {
           {'p_card_id': cardId, if (nonce != null) 'p_nonce': nonce});
 
   // ---- Ads -----------------------------------------------------------------
+  Future<AdsConfig> adsConfig() async =>
+      AdsConfig.fromJson(await _rpc('ads_config'));
+
   Future<Map<String, dynamic>> rewardAd(String nonce) =>
       _rpc('reward_ad', {'p_nonce': nonce});
 

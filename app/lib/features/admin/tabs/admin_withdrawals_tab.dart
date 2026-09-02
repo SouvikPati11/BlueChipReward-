@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -146,6 +147,11 @@ class _WithdrawalCard extends StatelessWidget {
     final id = w['id'] as String;
     final status = (w['status'] as String?) ?? 'pending';
     final amount = (w['amount'] as num?)?.toInt() ?? 0;
+    final txnId = w['txn_id'] as String?;
+    final currency = w['currency'] as String? ?? '';
+    final gross = (w['gross_amount'] as num?);
+    final fee = (w['fee_amount'] as num?);
+    final net = (w['net_amount'] as num?);
     final details = (w['details'] as Map?)?.cast<String, dynamic>() ?? {};
     final createdAt = w['created_at'] != null
         ? DateTime.tryParse(w['created_at'] as String)
@@ -165,16 +171,28 @@ class _WithdrawalCard extends StatelessWidget {
               Pill(status.toUpperCase(), color: _statusColor(status)),
             ],
           ),
-          const SizedBox(height: 10),
+          if (txnId != null) ...[
+            const SizedBox(height: 8),
+            _copyRow(context, 'Txn ID', txnId),
+          ],
+          const SizedBox(height: 6),
           _kv(context, 'User', '${w['user_name'] ?? '—'}'),
-          _kv(context, 'Email', '${w['user_email'] ?? '—'}'),
-          _kv(context, 'User ID', '${w['user_id'] ?? '—'}'),
+          _copyRow(context, 'Email', '${w['user_email'] ?? '—'}'),
+          _copyRow(context, 'User ID', '${w['user_id'] ?? '—'}'),
           _kv(context, 'Ref code', '${w['referral_code'] ?? '—'}'),
           _kv(context, 'Balance', '${(w['balance'] as num?)?.toInt() ?? 0} BCP'),
           _kv(context, 'Method', '${w['method_name'] ?? w['method_key'] ?? '—'}'),
+          // Conversion + fee breakdown (server-computed).
+          if (gross != null)
+            _kv(context, 'Gross', '$currency${gross.toStringAsFixed(2)}'),
+          if (fee != null)
+            _kv(context, 'Fee', '$currency${fee.toStringAsFixed(2)}'),
+          if (net != null)
+            _kv(context, 'Final payout', '$currency${net.toStringAsFixed(2)}'),
+          // Payment details with copy buttons.
           if (details.isNotEmpty)
             for (final e in details.entries)
-              _kv(context, _pretty(e.key), '${e.value}'),
+              _copyRow(context, _pretty(e.key), '${e.value}'),
           if (createdAt != null)
             _kv(context, 'Requested', Fmt.dateTime(createdAt)),
           if (processedAt != null)
@@ -230,6 +248,36 @@ class _WithdrawalCard extends StatelessWidget {
           Expanded(
               child: Text(v,
                   style: const TextStyle(fontWeight: FontWeight.w600))),
+        ],
+      ),
+    );
+  }
+
+  /// Key/value row with a copy button (for payment details, IDs, email).
+  Widget _copyRow(BuildContext context, String k, String v) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+              width: 92,
+              child: Text(k,
+                  style: TextStyle(color: context.cx.textSecondary))),
+          Expanded(
+              child: Text(v,
+                  style: const TextStyle(fontWeight: FontWeight.w600))),
+          InkWell(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: v));
+              showSnack(context, '$k copied');
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: const Padding(
+              padding: EdgeInsets.all(6),
+              child: Icon(Icons.copy_rounded, size: 16),
+            ),
+          ),
         ],
       ),
     );

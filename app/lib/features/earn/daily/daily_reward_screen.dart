@@ -50,7 +50,7 @@ class _DailyRewardScreenState extends ConsumerState<DailyRewardScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Daily Reward')),
-      bottomNavigationBar: const BannerAdBar(),
+      bottomNavigationBar: const BannerAdBar(placement: 'daily'),
       body: SafeArea(
         top: false,
         child: statusAsync.when(

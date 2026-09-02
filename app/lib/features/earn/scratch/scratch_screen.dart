@@ -81,7 +81,7 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Scratch Card')),
-      bottomNavigationBar: const BannerAdBar(),
+      bottomNavigationBar: const BannerAdBar(placement: 'scratch'),
       body: SafeArea(
         top: false,
         child: _loading
