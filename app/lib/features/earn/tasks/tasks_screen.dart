@@ -23,8 +23,24 @@ class TasksScreen extends ConsumerStatefulWidget {
 class _TasksScreenState extends ConsumerState<TasksScreen> {
   String? _busyId;
 
-  Future<void> _do(TaskItem task) async {
-    // For a manual task, collect the required proof BEFORE opening anything.
+  /// §25: Opening the task link is NOT completion. It only launches the URL and
+  /// leaves the task in its current state so the user can still submit proof.
+  Future<void> _openLink(TaskItem task) async {
+    if (task.actionUrl == null || task.actionUrl!.isEmpty) return;
+    final uri = Uri.tryParse(task.actionUrl!);
+    if (uri == null) return;
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) showSnack(context, 'Could not open link', error: true);
+    }
+  }
+
+  /// Submit proof and claim. For auto-verify tasks this also opens the link
+  /// first (single "Start & claim" flow). For manual tasks the user is expected
+  /// to have already opened the link via [_openLink]; this only collects proof.
+  Future<void> _submit(TaskItem task, {bool openLinkFirst = false}) async {
+    // For a manual text task, collect the required proof BEFORE anything else.
     Map<String, dynamic>? proof;
     if (!task.autoVerify && task.proofMethod == 'text') {
       final text = await _askProofText(task);
@@ -32,12 +48,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       proof = {'text': text};
     }
 
-    // Open the action link first (visit / join).
-    if (task.actionUrl != null && task.actionUrl!.isNotEmpty) {
-      final uri = Uri.tryParse(task.actionUrl!);
-      if (uri != null) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
+    // Auto-verify convenience: open the action link as part of the claim.
+    if (openLinkFirst) {
+      await _openLink(task);
     }
 
     setState(() => _busyId = task.id);
@@ -67,8 +80,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         nonce = await runRewardedGate(ref, 'tasks');
       }
 
-      final res =
-          await repo.submitTask(task.id, proof: proof, nonce: nonce);
+      final res = await repo.submitTask(task.id, proof: proof, nonce: nonce);
       ref.invalidate(tasksProvider);
       ref.invalidate(walletProvider);
       ref.invalidate(transactionsProvider);
@@ -158,7 +170,10 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 itemBuilder: (_, i) => _TaskCard(
                   task: tasks[i],
                   busy: _busyId == tasks[i].id,
-                  onTap: () => _do(tasks[i]),
+                  onOpenLink: () => _openLink(tasks[i]),
+                  onSubmit: () => _submit(tasks[i]),
+                  onStartAndClaim: () =>
+                      _submit(tasks[i], openLinkFirst: true),
                 ),
               ),
             );
@@ -172,11 +187,20 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 class _TaskCard extends StatelessWidget {
   final TaskItem task;
   final bool busy;
-  final VoidCallback onTap;
-  const _TaskCard({required this.task, required this.busy, required this.onTap});
+  final VoidCallback onOpenLink;
+  final VoidCallback onSubmit;
+  final VoidCallback onStartAndClaim;
+  const _TaskCard({
+    required this.task,
+    required this.busy,
+    required this.onOpenLink,
+    required this.onSubmit,
+    required this.onStartAndClaim,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final hasLink = task.actionUrl != null && task.actionUrl!.isNotEmpty;
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,8 +214,7 @@ class _TaskCard extends StatelessWidget {
                   color: AppColors.info.withValues(alpha: .12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.task_alt_rounded,
-                    color: AppColors.info),
+                child: const Icon(Icons.task_alt_rounded, color: AppColors.info),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -211,38 +234,105 @@ class _TaskCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          if (task.isDone)
-            const Pill('Completed', color: AppColors.success, icon: Icons.check)
-          else if (task.isPending)
-            const Pill('Pending review',
-                color: AppColors.warning, icon: Icons.hourglass_bottom_rounded)
-          else
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: busy ? null : onTap,
-                style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(46)),
-                icon: busy
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                    : Icon(task.actionUrl != null
-                        ? Icons.open_in_new_rounded
-                        : Icons.play_arrow_rounded),
-                label: Text(task.autoVerify
-                    ? 'Start & claim'
-                    : task.proofMethod == 'screenshot'
-                        ? 'Do task & upload proof'
-                        : task.proofMethod == 'text'
-                            ? 'Do task & submit proof'
-                            : 'Start task'),
-              ),
-            ),
+          ..._buildActions(context, hasLink),
         ],
       ),
     );
   }
+
+  List<Widget> _buildActions(BuildContext context, bool hasLink) {
+    // Approved / rewarded → completed, nothing more to do.
+    if (task.isDone) {
+      return const [
+        Pill('Completed', color: AppColors.success, icon: Icons.check),
+      ];
+    }
+
+    // Pending admin review.
+    if (task.isPending) {
+      return const [
+        Pill('Pending review',
+            color: AppColors.warning, icon: Icons.hourglass_bottom_rounded),
+      ];
+    }
+
+    // Auto-verify: single combined "Start & claim" (opens link then claims).
+    if (task.autoVerify) {
+      return [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: busy ? null : onStartAndClaim,
+            style:
+                ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(46)),
+            icon: busy
+                ? const _BtnSpinner()
+                : Icon(hasLink
+                    ? Icons.open_in_new_rounded
+                    : Icons.play_arrow_rounded),
+            label: const Text('Start & claim'),
+          ),
+        ),
+      ];
+    }
+
+    // Manual proof task. §25: the link persists and is independent of proof
+    // submission. Rejected tasks show the same controls with a retry hint.
+    final widgets = <Widget>[];
+
+    if (task.isRejected) {
+      widgets.add(Row(
+        children: [
+          const Icon(Icons.error_outline_rounded,
+              size: 18, color: AppColors.danger),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text('Rejected — please redo the task and submit again.',
+                style: TextStyle(
+                    color: AppColors.danger, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ));
+      widgets.add(const SizedBox(height: 10));
+    }
+
+    if (hasLink) {
+      widgets.add(SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: busy ? null : onOpenLink,
+          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(46)),
+          icon: const Icon(Icons.open_in_new_rounded),
+          label: const Text('Open task link'),
+        ),
+      ));
+      widgets.add(const SizedBox(height: 10));
+    }
+
+    widgets.add(SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: busy ? null : onSubmit,
+        style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(46)),
+        icon: busy
+            ? const _BtnSpinner()
+            : Icon(task.proofMethod == 'screenshot'
+                ? Icons.upload_file_rounded
+                : Icons.check_circle_outline_rounded),
+        label: Text(task.isRejected ? 'Submit proof again' : 'Submit proof'),
+      ),
+    ));
+
+    return widgets;
+  }
+}
+
+class _BtnSpinner extends StatelessWidget {
+  const _BtnSpinner();
+  @override
+  Widget build(BuildContext context) => const SizedBox(
+        height: 18,
+        width: 18,
+        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+      );
 }

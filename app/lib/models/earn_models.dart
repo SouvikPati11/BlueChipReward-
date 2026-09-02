@@ -215,6 +215,7 @@ class TaskItem {
   bool get isDone =>
       completionState == 'rewarded' || completionState == 'verified';
   bool get isPending => completionState == 'pending';
+  bool get isRejected => completionState == 'rejected';
 }
 
 /// Invite milestone (dedicated invite-reward system).
