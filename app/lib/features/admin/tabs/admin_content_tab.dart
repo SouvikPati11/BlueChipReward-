@@ -7,6 +7,8 @@ import '../../../core/widgets/common.dart';
 import '../manage/manage_links.dart';
 import '../manage/manage_milestones.dart';
 import '../manage/manage_notifications.dart';
+import '../manage/manage_scratch_rules.dart';
+import '../manage/manage_watch_ad_rules.dart';
 import '../manage/manage_payment_methods.dart';
 import '../manage/manage_quizzes.dart';
 import '../manage/manage_referral.dart';
@@ -34,6 +36,14 @@ class AdminContentTab extends ConsumerWidget {
         _tile(context, Icons.account_tree_rounded, 'Referral levels',
             'Configure multi-level fixed / percentage rewards',
             const ManageReferralScreen()),
+        const SizedBox(height: 12),
+        _tile(context, Icons.style_rounded, 'Scratch Card rules',
+            'Reward ranges, ads, search delay & cooldown per band',
+            const ManageScratchRulesScreen()),
+        const SizedBox(height: 12),
+        _tile(context, Icons.smart_display_rounded, 'Watch Ads rules',
+            'Reward ranges, cooldown & daily limit per band',
+            const ManageWatchAdRulesScreen()),
         const SizedBox(height: 12),
         _tile(context, Icons.emoji_events_rounded, 'Invite milestones',
             'Reward users for reaching referral counts',

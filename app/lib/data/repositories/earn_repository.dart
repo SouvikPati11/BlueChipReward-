@@ -40,13 +40,17 @@ class EarnRepository {
 
   Future<Map<String, dynamic>> scratchConfig() => _rpc('scratch_config');
 
-  Future<Map<String, dynamic>> scratchReveal(String cardId, {String? nonce}) =>
-      _rpc('scratch_reveal',
-          {'p_card_id': cardId, if (nonce != null) 'p_nonce': nonce});
+  /// Reveal with the required number of completed rewarded-ad nonces. The
+  /// server enforces ads-required, the Search-Card delay and the cooldown.
+  Future<Map<String, dynamic>> scratchReveal(String cardId,
+          {List<String> nonces = const []}) =>
+      _rpc('scratch_reveal', {'p_card_id': cardId, 'p_nonces': nonces});
 
   // ---- Ads -----------------------------------------------------------------
   Future<AdsConfig> adsConfig() async =>
       AdsConfig.fromJson(await _rpc('ads_config'));
+
+  Future<Map<String, dynamic>> watchAdsStatus() => _rpc('watch_ads_status');
 
   Future<Map<String, dynamic>> rewardAd(String nonce) =>
       _rpc('reward_ad', {'p_nonce': nonce});

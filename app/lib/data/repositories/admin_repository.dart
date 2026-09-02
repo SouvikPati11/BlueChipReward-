@@ -192,6 +192,77 @@ class AdminRepository {
     }
   }
 
+  // ---- Scratch Card rules --------------------------------------------------
+  Future<List<Map<String, dynamic>>> scratchRules() async {
+    try {
+      final res = await Db.client.rpc('admin_scratch_rules');
+      return (res as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> saveScratchRule(Map<String, dynamic> r) async {
+    try {
+      await Db.client.rpc('admin_save_scratch_rule', params: {
+        'p_id': r['id'],
+        'p_from': r['from_card'],
+        'p_to': r['to_card'],
+        'p_min': r['min_reward'],
+        'p_max': r['max_reward'],
+        'p_ads': r['ads_required'],
+        'p_search_delay': r['search_delay_seconds'],
+        'p_cooldown': r['cooldown_seconds'],
+        'p_active': r['active'],
+      });
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> deleteScratchRule(String id) async {
+    try {
+      await Db.client.rpc('admin_delete_scratch_rule', params: {'p_id': id});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  // ---- Watch Ads rules -----------------------------------------------------
+  Future<List<Map<String, dynamic>>> watchAdRules() async {
+    try {
+      final res = await Db.client.rpc('admin_watch_ad_rules');
+      return (res as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> saveWatchAdRule(Map<String, dynamic> r) async {
+    try {
+      await Db.client.rpc('admin_save_watch_ad_rule', params: {
+        'p_id': r['id'],
+        'p_from': r['from_ad'],
+        'p_to': r['to_ad'],
+        'p_min': r['min_reward'],
+        'p_max': r['max_reward'],
+        'p_cooldown': r['cooldown_seconds'],
+        'p_daily_limit': r['daily_limit'],
+        'p_active': r['active'],
+      });
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> deleteWatchAdRule(String id) async {
+    try {
+      await Db.client.rpc('admin_delete_watch_ad_rule', params: {'p_id': id});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
   Future<void> adjustBalance(String userId, int amount, String reason) async {
     try {
       await Db.client.rpc('admin_adjust_balance', params: {

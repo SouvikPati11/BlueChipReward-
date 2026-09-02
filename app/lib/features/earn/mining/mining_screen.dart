@@ -178,14 +178,22 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
                     onPressed: (_busy || claimable <= 0 || s.claimsRemaining <= 0)
                         ? null
                         : () => _claim(s),
-                    icon: const Icon(Icons.download_rounded),
-                    label: Text(s.claimsRemaining <= 0
-                        ? 'Claim limit reached'
-                        : claimable <= 0
-                            ? 'Nothing to claim yet'
-                            : s.claimRequiresAd
-                                ? 'Watch ad & claim $claimable BCP'
-                                : 'Claim $claimable BCP'),
+                    icon: _busy
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2.2, color: Colors.white))
+                        : const Icon(Icons.download_rounded),
+                    label: Text(_busy
+                        ? 'Processing…'
+                        : s.claimsRemaining <= 0
+                            ? 'Claim limit reached'
+                            : claimable <= 0
+                                ? 'Nothing to claim yet'
+                                : s.claimRequiresAd
+                                    ? 'Watch ad & claim $claimable BCP'
+                                    : 'Claim $claimable BCP'),
                   ),
                   if (!s.completed) ...[
                     const SizedBox(height: 16),
