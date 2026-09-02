@@ -6,16 +6,29 @@ class DailyStatus {
   final int currentStreak;
   final String nextAvailableUtc;
 
+  /// Day-wise reward schedule for the 7-day cycle (server-configured).
+  final List<int> days;
+  final int nextStreak;
+  final int nextAmount;
+
   const DailyStatus({
     required this.claimedToday,
     required this.currentStreak,
     required this.nextAvailableUtc,
+    this.days = const [],
+    this.nextStreak = 1,
+    this.nextAmount = 0,
   });
 
   factory DailyStatus.fromJson(Map<String, dynamic> j) => DailyStatus(
         claimedToday: j['claimed_today'] as bool? ?? false,
         currentStreak: (j['current_streak'] as num?)?.toInt() ?? 0,
         nextAvailableUtc: j['next_available_utc'] as String? ?? '',
+        days: ((j['days'] as List?) ?? const [])
+            .map((e) => (e as num).toInt())
+            .toList(),
+        nextStreak: (j['next_streak'] as num?)?.toInt() ?? 1,
+        nextAmount: (j['next_amount'] as num?)?.toInt() ?? 0,
       );
 }
 

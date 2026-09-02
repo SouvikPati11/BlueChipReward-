@@ -90,19 +90,32 @@ class ReferralLevel {
   final int reward;
   final int count;
   final int earnings;
+  final bool enabled;
+  final String type; // fixed | percent
+  final num value;
 
   const ReferralLevel({
     required this.level,
     required this.reward,
     required this.count,
     required this.earnings,
+    this.enabled = true,
+    this.type = 'fixed',
+    this.value = 0,
   });
+
+  /// Human label for the level's configured reward, e.g. "100 BCP" or "10%".
+  String get rewardLabel =>
+      type == 'percent' ? '${value.toString()}%' : '$reward BCP';
 
   factory ReferralLevel.fromJson(Map<String, dynamic> j) => ReferralLevel(
         level: (j['level'] as num?)?.toInt() ?? 1,
         reward: (j['reward'] as num?)?.toInt() ?? 0,
         count: (j['count'] as num?)?.toInt() ?? 0,
         earnings: (j['earnings'] as num?)?.toInt() ?? 0,
+        enabled: j['enabled'] as bool? ?? true,
+        type: j['type'] as String? ?? 'fixed',
+        value: (j['value'] as num?) ?? 0,
       );
 }
 
