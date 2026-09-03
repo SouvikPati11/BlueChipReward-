@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -39,12 +40,33 @@ class AuthRepository {
 
   Future<void> signInEmail(
       {required String email, required String password}) async {
+    // Isolate the authentication call so ONLY a genuine auth failure is treated
+    // as a sign-in failure. Device registration (below) and session persistence
+    // are separate, non-fatal steps.
     try {
       await _auth.signInWithPassword(email: email, password: password);
-      await _registerDevice();
-    } catch (e) {
-      throw AppFailure.from(e);
+    } catch (e, st) {
+      // If a valid session is present despite the throw, authentication itself
+      // SUCCEEDED and the error came from a later native step (e.g. persisting
+      // the session to device storage threw a PlatformException). That is NOT
+      // an authentication failure — the user is signed in for this run — so we
+      // proceed. Only when there is no session do we surface a real failure.
+      if (_auth.currentSession != null) {
+        assert(() {
+          debugPrint(
+              'signInEmail: session established despite ${e.runtimeType}: $e');
+          return true;
+        }());
+      } else {
+        assert(() {
+          debugPrint('signInEmail: signInWithPassword failed → '
+              '${e.runtimeType}: $e\n$st');
+          return true;
+        }());
+        throw AppFailure.from(e);
+      }
     }
+    await _registerDevice();
   }
 
   /// Best-effort: record this install's device id for same-device fraud checks.

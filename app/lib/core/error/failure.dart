@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show PlatformException, MissingPluginException;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// A user-presentable failure. Maps backend error codes (raised as Postgres
@@ -70,6 +71,22 @@ class AppFailure implements Exception {
       // Real auth outcome (invalid credentials, disabled user, etc.) — map the
       // common cases to friendly text and pass the rest through as-is.
       return AppFailure('AUTH', _friendlyAuth(error.message));
+    }
+
+    // A native plugin threw across the platform channel (storage/keystore/etc).
+    // The code + message are safe to surface (they are not secrets) and are
+    // exactly what identifies the offending native operation. Full details go
+    // to the log only (still no secrets — plugin errors don't carry the key).
+    if (error is MissingPluginException) {
+      return AppFailure('PLUGIN',
+          'A required app component is missing (${error.message ?? 'MissingPlugin'}). Please reinstall the app.');
+    }
+    if (error is PlatformException) {
+      final code = error.code.trim();
+      final msg = (error.message ?? '').trim();
+      final shown = msg.isEmpty ? code : '$code — $msg';
+      return AppFailure('PLATFORM',
+          'Sign-in couldn\'t complete on this device (PlatformException: $shown). Please try again.');
     }
 
     // Everything below is NOT an authentication failure — distinguishing these
