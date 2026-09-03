@@ -84,6 +84,25 @@ class AppFailure implements Exception {
     if (error is PlatformException) {
       final code = error.code.trim();
       final msg = (error.message ?? '').trim();
+      final blob = '$code $msg';
+      // Google Sign-In (google_sign_in plugin) failures — actionable messages.
+      // These come ONLY from the "Continue with Google" flow, never from
+      // email/password sign-in.
+      if (code == 'sign_in_failed' || blob.contains('ApiException')) {
+        if (blob.contains('ApiException: 10') || blob.contains('DEVELOPER_ERROR')) {
+          return const AppFailure('GOOGLE_CONFIG',
+              'Google Sign-In isn\'t configured for this build yet. Please sign in with your email and password.');
+        }
+        if (blob.contains('ApiException: 7') || blob.contains('NETWORK')) {
+          return const AppFailure('GOOGLE_NETWORK',
+              'Network problem during Google Sign-In. Check your connection and try again.');
+        }
+        if (blob.contains('12501') || blob.toLowerCase().contains('cancel')) {
+          return const AppFailure('CANCELLED', 'Sign-in cancelled.');
+        }
+        return AppFailure('GOOGLE',
+            'Google Sign-In couldn\'t complete ($code). Please try email & password.');
+      }
       final shown = msg.isEmpty ? code : '$code — $msg';
       return AppFailure('PLATFORM',
           'Sign-in couldn\'t complete on this device (PlatformException: $shown). Please try again.');

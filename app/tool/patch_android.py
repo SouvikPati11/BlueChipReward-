@@ -28,6 +28,19 @@ GOOGLE_SERVICES_DST = os.path.join(ANDROID, "app", "google-services.json")
 GOOGLE_SERVICES_PLACEHOLDER = os.path.join(
     HERE, "..", "android_firebase", "google-services.json")
 
+# A COMMITTED, stable debug keystore. Flutter/AGP otherwise signs debug builds
+# with an auto-generated ~/.android/debug.keystore that is unique per machine
+# (and per CI run), so its SHA-1 can never be registered for Google Sign-In —
+# producing ApiException: 10 (DEVELOPER_ERROR) on every debug APK. Using a fixed
+# keystore gives the debug build a permanent, registerable SHA-1. A debug
+# keystore is NOT a secret (it uses the well-known password "android"); it only
+# signs test builds and is unrelated to the release/upload keystore.
+DEBUG_KEYSTORE_SRC = os.path.join(HERE, "..", "android_keys", "debug.keystore")
+DEBUG_KEYSTORE_DST = os.path.join(ANDROID, "app", "debug.keystore")
+DEBUG_KEYSTORE_STOREPASS = "android"
+DEBUG_KEYSTORE_ALIAS = "androiddebugkey"
+DEBUG_KEYSTORE_KEYPASS = "android"
+
 # Pin the Google Services Gradle plugin and the desugaring library. Both are
 # compatible with the AGP that Flutter 3.32's scaffold generates.
 GOOGLE_SERVICES_PLUGIN_VERSION = "4.4.2"
@@ -298,6 +311,66 @@ def patch_app_gradle_for_firebase():
           "(google-services applied, core-library desugaring enabled)")
 
 
+def configure_debug_signing():
+    """Point the DEBUG build at the committed, stable debug keystore so its
+    signing SHA-1 is permanent and can be registered for Google Sign-In.
+
+    Idempotent. No-op (with a warning) if the committed keystore is missing.
+    Does NOT touch release signing.
+    """
+    import shutil
+    if not os.path.exists(DEBUG_KEYSTORE_SRC):
+        print("no committed debug.keystore found; leaving default debug signing",
+              file=sys.stderr)
+        return
+    os.makedirs(os.path.dirname(DEBUG_KEYSTORE_DST), exist_ok=True)
+    shutil.copy2(DEBUG_KEYSTORE_SRC, DEBUG_KEYSTORE_DST)
+
+    path = APP_GRADLE_KTS if os.path.exists(APP_GRADLE_KTS) else APP_GRADLE_GROOVY
+    if not os.path.exists(path):
+        print("no app build.gradle found; skipping debug signing config",
+              file=sys.stderr)
+        return
+    with open(path, "r", encoding="utf-8") as f:
+        g = f.read()
+    if 'file("debug.keystore")' in g or "file('debug.keystore')" in g:
+        return  # already configured
+    is_kts = path.endswith(".kts")
+    if is_kts:
+        block = (
+            "\n    signingConfigs {\n"
+            '        getByName("debug") {\n'
+            '            storeFile = file("debug.keystore")\n'
+            f'            storePassword = "{DEBUG_KEYSTORE_STOREPASS}"\n'
+            f'            keyAlias = "{DEBUG_KEYSTORE_ALIAS}"\n'
+            f'            keyPassword = "{DEBUG_KEYSTORE_KEYPASS}"\n'
+            "        }\n"
+            "    }\n"
+        )
+    else:
+        block = (
+            "\n    signingConfigs {\n"
+            "        debug {\n"
+            "            storeFile file('debug.keystore')\n"
+            f"            storePassword '{DEBUG_KEYSTORE_STOREPASS}'\n"
+            f"            keyAlias '{DEBUG_KEYSTORE_ALIAS}'\n"
+            f"            keyPassword '{DEBUG_KEYSTORE_KEYPASS}'\n"
+            "        }\n"
+            "    }\n"
+        )
+    # Insert the signingConfigs block right after the opening `android {`.
+    m = re.search(r"android\s*\{", g)
+    if not m:
+        print("android { } block not found; skipping debug signing config",
+              file=sys.stderr)
+        return
+    g = g[:m.end()] + block + g[m.end():]
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(g)
+    print(f"patched {os.path.basename(path)} (debug build uses committed "
+          "debug.keystore — stable SHA-1 for Google Sign-In)")
+
+
 def install_icons():
     """Overlay the generated launcher icons (android_res/) onto the Android
     project's res/, replacing Flutter's default icon."""
@@ -319,6 +392,7 @@ def install_icons():
 if __name__ == "__main__":
     patch_manifest()
     patch_gradle()
+    configure_debug_signing()
     if install_google_services_json():
         patch_settings_gradle_for_google_services()
         patch_app_gradle_for_firebase()

@@ -69,6 +69,16 @@ jobs:
           flutter create --platforms=android --org com.bluechip --project-name bluechip_rewards .
           python3 tool/patch_android.py
 
+      - name: Debug signing SHA-1 (for Google Sign-In registration)
+        run: |
+          echo "Debug APK signing certificate — register this SHA-1 as an"
+          echo "Android OAuth client (package com.bluechip.bluechip_rewards) in"
+          echo "Google Cloud so Google Sign-In works on the debug build."
+          echo "A cert SHA-1 is not a secret."
+          keytool -list -v -keystore android_keys/debug.keystore \
+            -storepass android -alias androiddebugkey 2>/dev/null \
+            | grep -E "SHA1:|SHA256:" || echo "debug.keystore not found"
+
       - name: Write runtime config (.env)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
