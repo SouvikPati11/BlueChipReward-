@@ -78,8 +78,12 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
 
   Future<void> _startScratch() async {
     if (_cardId == null || _phase != _Phase.idle) return;
-    // 1) Watch the required number of rewarded ads, collecting nonces.
+    // 1) Watch the required number of rewarded ads, collecting nonces. If the
+    // admin has disabled rewarded ads (master/section OFF), runRewardedGate
+    // returns null and we reveal directly — the server also skips the ad
+    // requirement in that case, so no ad is required anywhere.
     _nonces.clear();
+    var adsSkipped = false;
     if (_adsRequired > 0) {
       setState(() => _phase = _Phase.watchingAds);
       for (var i = 0; i < _adsRequired; i++) {
@@ -92,18 +96,17 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
           return;
         }
         if (nonce == null) {
-          if (mounted) {
-            showSnack(context, 'Ad not completed. Please watch the full ad.',
-                error: true);
-          }
-          setState(() => _phase = _Phase.idle);
-          return;
+          // Rewarded ads disabled by admin → skip ads and reveal directly.
+          adsSkipped = true;
+          _nonces.clear();
+          break;
         }
         _nonces.add(nonce);
       }
     }
-    // 2) Search-Card delay countdown, then reveal.
-    if (_searchDelay > 0) {
+    // 2) Search-Card delay countdown (only when an ad was actually watched),
+    // then reveal.
+    if (!adsSkipped && _searchDelay > 0) {
       setState(() {
         _phase = _Phase.searchDelay;
         _searchUntil = DateTime.now().add(Duration(seconds: _searchDelay));

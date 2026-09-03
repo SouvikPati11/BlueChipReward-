@@ -6,9 +6,10 @@ import 'package:bluechip_rewards/core/theme/app_palette.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../../providers/repositories.dart';
 import '../admin_providers.dart';
-import '../manage/manage_contests.dart';
 
 /// Contest claim reviews. Also gives quick access to manage contests.
 class AdminContestClaimsTab extends ConsumerWidget {
@@ -33,8 +34,7 @@ class AdminContestClaimsTab extends ConsumerWidget {
     final async = ref.watch(adminContestClaimsProvider('claim_pending'));
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => const ManageContestsScreen())),
+        onPressed: () => context.push('/admin/contests'),
         icon: const Icon(Icons.settings_rounded),
         label: const Text('Manage contests'),
       ),

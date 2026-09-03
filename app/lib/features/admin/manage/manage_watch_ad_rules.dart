@@ -46,6 +46,7 @@ class ManageWatchAdRulesScreen extends ConsumerWidget {
               final r = rules[i];
               final active = r['active'] == true;
               final dl = (r['daily_limit'] as num?)?.toInt() ?? 0;
+              final wa = (r['wait_after_seconds'] as num?)?.toInt() ?? 0;
               return SectionCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,6 +67,7 @@ class ManageWatchAdRulesScreen extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                         '${r['min_reward']}–${r['max_reward']} BCP • cooldown ${_fmt(r['cooldown_seconds'])}'
+                        '${wa > 0 ? '\nWait after previous rule: ${_fmt(wa)}' : ''}'
                         '${dl > 0 ? '\nDaily limit: $dl' : ''}',
                         style: TextStyle(color: context.cx.textSecondary)),
                     Row(
@@ -121,6 +123,8 @@ class ManageWatchAdRulesScreen extends ConsumerWidget {
     final max = TextEditingController(text: '${r?['max_reward'] ?? ''}');
     final cooldown =
         TextEditingController(text: '${r?['cooldown_seconds'] ?? 30}');
+    final wait =
+        TextEditingController(text: '${r?['wait_after_seconds'] ?? 0}');
     final daily = TextEditingController(text: '${r?['daily_limit'] ?? 0}');
     bool active = r?['active'] ?? true;
 
@@ -155,7 +159,9 @@ class ManageWatchAdRulesScreen extends ConsumerWidget {
                   Expanded(child: _num(max, 'Max BCP')),
                 ]),
                 const SizedBox(height: 10),
-                _num(cooldown, 'Cooldown (seconds)'),
+                _num(cooldown, 'Cooldown between ads (seconds)'),
+                const SizedBox(height: 10),
+                _num(wait, 'Wait after previous rule (seconds)'),
                 const SizedBox(height: 10),
                 _num(daily, 'Daily limit (0 = auto)'),
                 SwitchListTile(
@@ -202,6 +208,7 @@ class ManageWatchAdRulesScreen extends ConsumerWidget {
         'min_reward': minV,
         'max_reward': maxV,
         'cooldown_seconds': int.tryParse(cooldown.text.trim()) ?? 30,
+        'wait_after_seconds': int.tryParse(wait.text.trim()) ?? 0,
         'daily_limit': int.tryParse(daily.text.trim()) ?? 0,
         'active': active,
       });

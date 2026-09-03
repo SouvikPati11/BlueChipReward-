@@ -214,6 +214,8 @@ class AdminRepository {
         'p_search_delay': r['search_delay_seconds'],
         'p_cooldown': r['cooldown_seconds'],
         'p_active': r['active'],
+        'p_wait_after': r['wait_after_seconds'],
+        'p_daily_limit': r['daily_limit'],
       });
     } catch (e) {
       throw AppFailure.from(e);
@@ -249,6 +251,7 @@ class AdminRepository {
         'p_cooldown': r['cooldown_seconds'],
         'p_daily_limit': r['daily_limit'],
         'p_active': r['active'],
+        'p_wait_after': r['wait_after_seconds'],
       });
     } catch (e) {
       throw AppFailure.from(e);

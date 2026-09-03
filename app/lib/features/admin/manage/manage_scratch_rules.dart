@@ -67,7 +67,9 @@ class ManageScratchRulesScreen extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                         '${r['min_reward']}–${r['max_reward']} BCP • ${r['ads_required']} ad(s)\n'
-                        'Search delay ${r['search_delay_seconds']}s • cooldown ${_fmt(r['cooldown_seconds'])}',
+                        'Search delay ${r['search_delay_seconds']}s • cooldown ${_fmt(r['cooldown_seconds'])}'
+                        '${((r['wait_after_seconds'] as num?)?.toInt() ?? 0) > 0 ? '\nWait after previous rule: ${_fmt(r['wait_after_seconds'])}' : ''}'
+                        '${((r['daily_limit'] as num?)?.toInt() ?? 0) > 0 ? '\nDaily limit: ${r['daily_limit']}' : ''}',
                         style: TextStyle(color: context.cx.textSecondary)),
                     Row(
                       children: [
@@ -125,6 +127,9 @@ class ManageScratchRulesScreen extends ConsumerWidget {
         TextEditingController(text: '${r?['search_delay_seconds'] ?? 10}');
     final cooldown =
         TextEditingController(text: '${r?['cooldown_seconds'] ?? 3600}');
+    final wait =
+        TextEditingController(text: '${r?['wait_after_seconds'] ?? 0}');
+    final daily = TextEditingController(text: '${r?['daily_limit'] ?? 0}');
     bool active = r?['active'] ?? true;
 
     final ok = await showModalBottomSheet<bool>(
@@ -160,9 +165,13 @@ class ManageScratchRulesScreen extends ConsumerWidget {
                 const SizedBox(height: 10),
                 _num(ads, 'Ads required'),
                 const SizedBox(height: 10),
-                _num(delay, 'Search card delay (seconds)'),
+                _num(delay, 'Search card delay after ad (seconds)'),
                 const SizedBox(height: 10),
-                _num(cooldown, 'Next scratch cooldown (seconds)'),
+                _num(cooldown, 'Cooldown between cards (seconds)'),
+                const SizedBox(height: 10),
+                _num(wait, 'Wait after previous rule (seconds)'),
+                const SizedBox(height: 10),
+                _num(daily, 'Daily limit (0 = none)'),
                 SwitchListTile(
                   value: active,
                   onChanged: (v) => setState(() => active = v),
@@ -210,6 +219,8 @@ class ManageScratchRulesScreen extends ConsumerWidget {
         'ads_required': int.tryParse(ads.text.trim()) ?? 1,
         'search_delay_seconds': int.tryParse(delay.text.trim()) ?? 10,
         'cooldown_seconds': int.tryParse(cooldown.text.trim()) ?? 3600,
+        'wait_after_seconds': int.tryParse(wait.text.trim()) ?? 0,
+        'daily_limit': int.tryParse(daily.text.trim()) ?? 0,
         'active': active,
       });
       ref.invalidate(_scratchRulesProvider);

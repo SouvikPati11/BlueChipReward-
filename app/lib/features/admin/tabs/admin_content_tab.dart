@@ -1,20 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:bluechip_rewards/core/theme/app_colors.dart';
 import 'package:bluechip_rewards/core/theme/app_palette.dart';
 import '../../../core/widgets/common.dart';
-import '../manage/manage_links.dart';
-import '../manage/manage_milestones.dart';
-import '../manage/manage_notifications.dart';
-import '../manage/manage_scratch_rules.dart';
-import '../manage/manage_watch_ad_rules.dart';
-import '../manage/manage_payment_methods.dart';
-import '../manage/manage_quizzes.dart';
-import '../manage/manage_referral.dart';
-import '../manage/manage_tasks.dart';
 
-/// Hub for content management: tasks, quizzes and payment methods.
+/// Hub for content management. Each tile navigates to a real `/admin/...`
+/// GoRouter sub-route so Android Back is deterministic (screen → Content →
+/// Dashboard) and never jumps to the User panel.
 class AdminContentTab extends ConsumerWidget {
   const AdminContentTab({super.key});
 
@@ -24,50 +18,45 @@ class AdminContentTab extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       children: [
         _tile(context, Icons.checklist_rounded, 'Tasks',
-            'Create, edit and remove earning tasks', const ManageTasksScreen()),
+            'Create, edit and remove earning tasks', '/admin/tasks'),
         const SizedBox(height: 12),
         _tile(context, Icons.psychology_rounded, 'Quizzes',
-            'Create quizzes and manage questions', const ManageQuizzesScreen()),
+            'Create quizzes and manage questions', '/admin/quizzes'),
         const SizedBox(height: 12),
         _tile(context, Icons.account_balance_rounded, 'Payment methods',
-            'Withdrawal methods and required fields',
-            const ManagePaymentMethodsScreen()),
+            'Withdrawal methods and required fields', '/admin/payment-methods'),
         const SizedBox(height: 12),
         _tile(context, Icons.account_tree_rounded, 'Referral levels',
             'Configure multi-level fixed / percentage rewards',
-            const ManageReferralScreen()),
+            '/admin/referral-levels'),
         const SizedBox(height: 12),
         _tile(context, Icons.style_rounded, 'Scratch Card rules',
-            'Reward ranges, ads, search delay & cooldown per band',
-            const ManageScratchRulesScreen()),
+            'Reward ranges, ads, delays & cooldown per band',
+            '/admin/scratch-rules'),
         const SizedBox(height: 12),
         _tile(context, Icons.smart_display_rounded, 'Watch Ads rules',
-            'Reward ranges, cooldown & daily limit per band',
-            const ManageWatchAdRulesScreen()),
+            'Reward ranges, cooldown, wait & daily limit per band',
+            '/admin/watch-ad-rules'),
         const SizedBox(height: 12),
         _tile(context, Icons.emoji_events_rounded, 'Invite milestones',
-            'Reward users for reaching referral counts',
-            const ManageMilestonesScreen()),
-        const SizedBox(height: 12),
+            'Reward users for reaching referral counts', '/admin/milestones'),
         const SizedBox(height: 12),
         _tile(context, Icons.notifications_active_rounded,
             'Custom notifications',
             'Compose and send push/in-app notifications; view history',
-            const ManageNotificationsScreen()),
+            '/admin/notifications'),
         const SizedBox(height: 12),
         _tile(context, Icons.link_rounded, 'Links',
-            'Support, social and page links shown in the app',
-            const ManageLinksScreen()),
+            'Support, social and page links shown in the app', '/admin/links'),
       ],
     );
   }
 
   Widget _tile(BuildContext context, IconData icon, String title, String sub,
-      Widget screen) {
+      String route) {
     return InkWell(
       borderRadius: BorderRadius.circular(20),
-      onTap: () => Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => screen)),
+      onTap: () => context.push(route),
       child: SectionCard(
         child: Row(
           children: [

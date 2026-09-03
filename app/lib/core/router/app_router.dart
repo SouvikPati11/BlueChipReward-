@@ -6,6 +6,16 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/admin/admin_home.dart';
+import '../../features/admin/manage/manage_contests.dart';
+import '../../features/admin/manage/manage_links.dart';
+import '../../features/admin/manage/manage_milestones.dart';
+import '../../features/admin/manage/manage_notifications.dart';
+import '../../features/admin/manage/manage_payment_methods.dart';
+import '../../features/admin/manage/manage_quizzes.dart';
+import '../../features/admin/manage/manage_referral.dart';
+import '../../features/admin/manage/manage_scratch_rules.dart';
+import '../../features/admin/manage/manage_tasks.dart';
+import '../../features/admin/manage/manage_watch_ad_rules.dart';
 import '../../features/auth/forgot_password_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
@@ -92,7 +102,44 @@ final routerProvider = Provider<GoRouter>((ref) {
           path: '/notifications',
           builder: (_, __) => const NotificationsScreen()),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
-      GoRoute(path: '/admin', builder: (_, __) => const AdminHome()),
+      // Admin panel. Nested manage screens are real GoRouter sub-routes so the
+      // back stack is deterministic (Editor → Manage → Dashboard) and survives
+      // a router refresh — Android Back never jumps to the User panel.
+      GoRoute(
+        path: '/admin',
+        builder: (_, __) => const AdminHome(),
+        routes: [
+          GoRoute(
+              path: 'tasks',
+              builder: (_, __) => const ManageTasksScreen()),
+          GoRoute(
+              path: 'quizzes',
+              builder: (_, __) => const ManageQuizzesScreen()),
+          GoRoute(
+              path: 'payment-methods',
+              builder: (_, __) => const ManagePaymentMethodsScreen()),
+          GoRoute(
+              path: 'referral-levels',
+              builder: (_, __) => const ManageReferralScreen()),
+          GoRoute(
+              path: 'milestones',
+              builder: (_, __) => const ManageMilestonesScreen()),
+          GoRoute(
+              path: 'notifications',
+              builder: (_, __) => const ManageNotificationsScreen()),
+          GoRoute(
+              path: 'scratch-rules',
+              builder: (_, __) => const ManageScratchRulesScreen()),
+          GoRoute(
+              path: 'watch-ad-rules',
+              builder: (_, __) => const ManageWatchAdRulesScreen()),
+          GoRoute(
+              path: 'links', builder: (_, __) => const ManageLinksScreen()),
+          GoRoute(
+              path: 'contests',
+              builder: (_, __) => const ManageContestsScreen()),
+        ],
+      ),
     ],
   );
   appRouter = router;
@@ -102,7 +149,23 @@ final routerProvider = Provider<GoRouter>((ref) {
 class _AuthRefresh extends ChangeNotifier {
   late final StreamSubscription<AuthState> _sub;
   _AuthRefresh(Stream<AuthState> stream) {
-    _sub = stream.listen((_) => notifyListeners());
+    // Only re-evaluate routing on real auth transitions. In particular we must
+    // NOT rebuild on `tokenRefreshed`/`userUpdated`: those fire periodically and
+    // on resume, and a GoRouter rebuild would drop imperatively-pushed pages
+    // (e.g. an open Admin screen), bouncing the user back to Home. This was the
+    // cause of the "Admin back jumps to User Home" bug.
+    _sub = stream.listen((state) {
+      switch (state.event) {
+        case AuthChangeEvent.signedIn:
+        case AuthChangeEvent.signedOut:
+        case AuthChangeEvent.initialSession:
+        case AuthChangeEvent.passwordRecovery:
+          notifyListeners();
+          break;
+        default:
+          break; // tokenRefreshed, userUpdated, mfa events → no routing change
+      }
+    });
   }
   @override
   void dispose() {
