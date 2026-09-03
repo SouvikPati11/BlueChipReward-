@@ -266,6 +266,42 @@ class AdminRepository {
     }
   }
 
+  // ---- Search Card rules ---------------------------------------------------
+  Future<List<Map<String, dynamic>>> searchRules() async {
+    try {
+      final res = await Db.client.rpc('admin_search_rules');
+      return (res as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> saveSearchRule(Map<String, dynamic> r) async {
+    try {
+      await Db.client.rpc('admin_save_search_rule', params: {
+        'p_id': r['id'],
+        'p_from': r['from_search'],
+        'p_to': r['to_search'],
+        'p_min': r['min_reward'],
+        'p_max': r['max_reward'],
+        'p_cooldown': r['cooldown_seconds'],
+        'p_wait_after': r['wait_after_seconds'],
+        'p_daily_limit': r['daily_limit'],
+        'p_active': r['active'],
+      });
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  Future<void> deleteSearchRule(String id) async {
+    try {
+      await Db.client.rpc('admin_delete_search_rule', params: {'p_id': id});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
   Future<void> adjustBalance(String userId, int amount, String reason) async {
     try {
       await Db.client.rpc('admin_adjust_balance', params: {

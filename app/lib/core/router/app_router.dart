@@ -14,6 +14,7 @@ import '../../features/admin/manage/manage_payment_methods.dart';
 import '../../features/admin/manage/manage_quizzes.dart';
 import '../../features/admin/manage/manage_referral.dart';
 import '../../features/admin/manage/manage_scratch_rules.dart';
+import '../../features/admin/manage/manage_search_rules.dart';
 import '../../features/admin/manage/manage_tasks.dart';
 import '../../features/admin/manage/manage_watch_ad_rules.dart';
 import '../../features/auth/forgot_password_screen.dart';
@@ -26,6 +27,7 @@ import '../../features/contest/contest_screen.dart';
 import '../../features/earn/invite/invite_milestones_screen.dart';
 import '../../features/earn/quiz/quiz_screen.dart';
 import '../../features/earn/scratch/scratch_screen.dart';
+import '../../features/earn/search/search_card_screen.dart';
 import '../../features/earn/tasks/tasks_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/profile/settings_screen.dart';
@@ -87,6 +89,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/earn/quiz', builder: (_, __) => const QuizScreen()),
       GoRoute(path: '/earn/tasks', builder: (_, __) => const TasksScreen()),
       GoRoute(
+          path: '/earn/search',
+          builder: (_, __) => const SearchCardScreen()),
+      GoRoute(
           path: '/refer/milestones',
           builder: (_, __) => const InviteMilestonesScreen()),
       GoRoute(path: '/contests', builder: (_, __) => const ContestScreen()),
@@ -133,6 +138,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
               path: 'watch-ad-rules',
               builder: (_, __) => const ManageWatchAdRulesScreen()),
+          GoRoute(
+              path: 'search-rules',
+              builder: (_, __) => const ManageSearchRulesScreen()),
           GoRoute(
               path: 'links', builder: (_, __) => const ManageLinksScreen()),
           GoRoute(

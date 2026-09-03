@@ -55,6 +55,14 @@ class EarnRepository {
   Future<Map<String, dynamic>> rewardAd(String nonce) =>
       _rpc('reward_ad', {'p_nonce': nonce});
 
+  // ---- Search Card ---------------------------------------------------------
+  Future<Map<String, dynamic>> searchCardStatus() => _rpc('search_card_status');
+
+  Future<Map<String, dynamic>> searchCardConfig() => _rpc('search_card_config');
+
+  Future<Map<String, dynamic>> searchCardReward({String? nonce}) =>
+      _rpc('search_card_reward', {if (nonce != null) 'p_nonce': nonce});
+
   /// Ad funnel: begin an ad show → returns a server nonce that ties the funnel
   /// events together and later authorises a gated reward.
   Future<String> adBegin(String placement) async {

@@ -49,6 +49,8 @@ class MiningStatus {
   final bool canBoost;
   final DateTime? nextBoostAt;
   final bool boostRequiresAd;
+  final bool boostActive;
+  final DateTime? boostEndsAt;
   final bool startRequiresAd;
   final bool claimRequiresAd;
   final int maxClaims;
@@ -72,6 +74,8 @@ class MiningStatus {
     this.canBoost = false,
     this.nextBoostAt,
     this.boostRequiresAd = true,
+    this.boostActive = false,
+    this.boostEndsAt,
     this.startRequiresAd = false,
     this.claimRequiresAd = false,
     this.maxClaims = 5,
@@ -102,6 +106,10 @@ class MiningStatus {
             ? DateTime.parse(j['next_boost_at'] as String)
             : null,
         boostRequiresAd: j['boost_requires_ad'] as bool? ?? true,
+        boostActive: j['boost_active'] as bool? ?? false,
+        boostEndsAt: j['boost_ends_at'] != null
+            ? DateTime.parse(j['boost_ends_at'] as String)
+            : null,
         startRequiresAd: j['start_requires_ad'] as bool? ?? false,
         claimRequiresAd: j['claim_requires_ad'] as bool? ?? false,
         maxClaims: (j['max_claims'] as num?)?.toInt() ?? 5,

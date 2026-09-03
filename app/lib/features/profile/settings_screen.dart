@@ -140,7 +140,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const ListTile(
                 leading: Icon(Icons.info_outline_rounded),
                 title: Text('Version'),
-                trailing: Text('1.3.3'),
+                trailing: Text('1.4.0'),
               ),
             ],
           ),

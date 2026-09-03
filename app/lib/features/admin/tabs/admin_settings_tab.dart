@@ -50,6 +50,8 @@ class AdminSettingsTab extends ConsumerWidget {
           SettingKind.percent),
       _Spec('mining_boost_cooldown_hours', 'Boost cooldown (hours)',
           SettingKind.number),
+      _Spec('mining_boost_duration_minutes', 'Boost active duration (minutes)',
+          SettingKind.number),
       _Spec('mining_boost_compounding', 'Boosts compound', SettingKind.toggle),
       _Spec('mining_boost_requires_ad', 'Boost requires rewarded ad',
           SettingKind.toggle),
@@ -91,6 +93,8 @@ class AdminSettingsTab extends ConsumerWidget {
       _Spec('ad_gate_quiz', 'Quiz · rewarded required', SettingKind.toggle),
       _Spec('ad_gate_watch_ads', 'Watch Ads · rewarded', SettingKind.toggle),
       _Spec('ad_gate_tasks', 'Tasks · rewarded required', SettingKind.toggle),
+      _Spec('ad_gate_search', 'Search Card · rewarded required',
+          SettingKind.toggle),
       // Banner per section
       _Spec('banner_daily', 'Daily · banner', SettingKind.toggle),
       _Spec('banner_scratch', 'Scratch · banner', SettingKind.toggle),
@@ -98,6 +102,7 @@ class AdminSettingsTab extends ConsumerWidget {
       _Spec('banner_watch_ads', 'Watch Ads · banner', SettingKind.toggle),
       _Spec('banner_quiz', 'Quiz · banner', SettingKind.toggle),
       _Spec('banner_tasks', 'Tasks · banner', SettingKind.toggle),
+      _Spec('banner_search', 'Search Card · banner', SettingKind.toggle),
     ],
     'Automatic reminders': [
       _Spec('reminder_daily_enabled', 'Daily reward reminder',

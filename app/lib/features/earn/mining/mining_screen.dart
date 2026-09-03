@@ -8,6 +8,7 @@ import '../../../core/utils/ad_gate.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/banner_ad_bar.dart';
 import '../../../core/widgets/common.dart';
+import '../../../core/widgets/countdown.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../models/earn_models.dart';
 import '../../../providers/data_providers.dart';
@@ -146,10 +147,15 @@ class _MiningScreenState extends ConsumerState<MiningScreen> {
               children: [
                 _MiningOrb(
                   active: s.active,
+                  boostActive: s.boostActive,
                   progress: progress.toDouble(),
                   claimable: claimable,
                   rate: s.ratePerHour,
                 ),
+                if (s.active && s.boostActive) ...[
+                  const SizedBox(height: 14),
+                  _BoostActiveBanner(status: s),
+                ],
                 const SizedBox(height: 24),
                 if (s.active) ...[
                   SectionCard(
@@ -342,8 +348,58 @@ class _BoostCard extends StatelessWidget {
   }
 }
 
+/// Server-driven boost banner: only shown while `boostActive` is true (i.e. the
+/// server confirms a live boost). Shows the boosted rate and a countdown to
+/// expiry; when it reaches zero the screen reloads and reverts to normal.
+class _BoostActiveBanner extends ConsumerWidget {
+  final MiningStatus status;
+  const _BoostActiveBanner({required this.status});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+            colors: [Color(0xFF7C3AED), Color(0xFF22D3EE)]),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.rocket_launch_rounded, color: Colors.white),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Boost active',
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w800)),
+                Text('${status.ratePerHour} BCP/hour (base ${status.baseRate})',
+                    style: TextStyle(
+                        color: Colors.white.withValues(alpha: .9), fontSize: 12)),
+              ],
+            ),
+          ),
+          CountdownText(
+            target: status.boostEndsAt,
+            prefix: '',
+            onFinished: () => ref.invalidate(miningStatusProvider),
+            style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 18),
+            finishedChild: const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MiningOrb extends StatelessWidget {
   final bool active;
+  final bool boostActive;
   final double progress;
   final int claimable;
   final int rate;
@@ -352,10 +408,27 @@ class _MiningOrb extends StatelessWidget {
     required this.progress,
     required this.claimable,
     required this.rate,
+    this.boostActive = false,
   });
+
+  // A distinct boost gradient/color, shown ONLY when a boost is server-verified
+  // active — so the colour never changes merely because a button was tapped.
+  static const _boostColor = Color(0xFF7C3AED); // violet
+  static const _boostGradient = LinearGradient(
+    colors: [Color(0xFF7C3AED), Color(0xFF22D3EE)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   @override
   Widget build(BuildContext context) {
+    final ringColor = boostActive ? _boostColor : AppColors.gold;
+    final centerGradient = boostActive
+        ? _boostGradient
+        : (active
+            ? AppColors.goldGradient
+            : LinearGradient(
+                colors: [context.cx.surfaceAlt, context.cx.surfaceAlt]));
     return Center(
       child: SizedBox(
         width: 220,
@@ -370,26 +443,17 @@ class _MiningOrb extends StatelessWidget {
                 value: active ? progress : 0,
                 strokeWidth: 12,
                 backgroundColor: context.cx.surfaceAlt,
-                valueColor:
-                    const AlwaysStoppedAnimation(AppColors.gold),
+                valueColor: AlwaysStoppedAnimation(ringColor),
               ),
             ),
             Container(
               width: 168,
               height: 168,
-              decoration: BoxDecoration(
-                gradient: active
-                    ? AppColors.goldGradient
-                    : LinearGradient(colors: [
-                        context.cx.surfaceAlt,
-                        context.cx.surfaceAlt
-                      ]),
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(gradient: centerGradient, shape: BoxShape.circle),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.bolt_rounded,
+                  Icon(boostActive ? Icons.rocket_launch_rounded : Icons.bolt_rounded,
                       size: 40,
                       color: active ? Colors.white : context.cx.textSecondary),
                   const SizedBox(height: 6),
@@ -399,12 +463,17 @@ class _MiningOrb extends StatelessWidget {
                           fontWeight: FontWeight.w900,
                           color:
                               active ? Colors.white : context.cx.textSecondary)),
-                  Text(active ? 'BCP mined' : 'Tap start below',
+                  Text(boostActive
+                          ? 'BOOST ACTIVE'
+                          : (active ? 'BCP mined' : 'Tap start below'),
                       style: TextStyle(
                           color: active
                               ? Colors.white.withValues(alpha: .9)
                               : context.cx.textSecondary,
-                          fontSize: 12)),
+                          fontSize: 12,
+                          fontWeight:
+                              boostActive ? FontWeight.w800 : FontWeight.w400,
+                          letterSpacing: boostActive ? 1 : 0)),
                 ],
               ),
             ),
