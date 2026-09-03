@@ -75,3 +75,52 @@ class _CountdownTextState extends State<CountdownText> {
     return Text('${widget.prefix}${_fmt(rem)}', style: widget.style);
   }
 }
+
+/// Shared "daily cycle complete → come back tomorrow" panel used by Scratch,
+/// Search and Watch-Ads. The countdown targets an absolute server timestamp
+/// (start of the next UTC day), so it stays correct across app close/reopen,
+/// logout/login, reinstall and device-clock changes. When it reaches zero it
+/// calls [onFinished] (typically a reload) so the next cycle unlocks.
+class CycleCompleteView extends StatelessWidget {
+  final DateTime target;
+  final String title;
+  final VoidCallback? onFinished;
+  final Color color;
+  const CycleCompleteView({
+    super.key,
+    required this.target,
+    required this.title,
+    this.onFinished,
+    this.color = const Color(0xFFF59E0B),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final secondary =
+        Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: .7);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.event_available_rounded, size: 56, color: color),
+        const SizedBox(height: 16),
+        Text(title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 6),
+        Text('Come back tomorrow', style: TextStyle(color: secondary)),
+        const SizedBox(height: 14),
+        CountdownText(
+          target: target,
+          onFinished: onFinished,
+          style: TextStyle(
+              fontSize: 34, fontWeight: FontWeight.w900, color: color),
+          finishedChild: const Text('Available now',
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF16A34A))),
+        ),
+      ],
+    );
+  }
+}

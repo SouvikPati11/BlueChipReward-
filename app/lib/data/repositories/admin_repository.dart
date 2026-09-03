@@ -204,14 +204,16 @@ class AdminRepository {
 
   Future<void> saveScratchRule(Map<String, dynamic> r) async {
     try {
+      // Scratch always uses exactly ONE rewarded ad and no artificial delay —
+      // the admin does not configure these. The server also forces 1 / 0.
       await Db.client.rpc('admin_save_scratch_rule', params: {
         'p_id': r['id'],
         'p_from': r['from_card'],
         'p_to': r['to_card'],
         'p_min': r['min_reward'],
         'p_max': r['max_reward'],
-        'p_ads': r['ads_required'],
-        'p_search_delay': r['search_delay_seconds'],
+        'p_ads': 1,
+        'p_search_delay': 0,
         'p_cooldown': r['cooldown_seconds'],
         'p_active': r['active'],
         'p_wait_after': r['wait_after_seconds'],
@@ -443,6 +445,17 @@ class AdminRepository {
   Future<void> deleteQuizQuestion(String id) async {
     try {
       await Db.client.rpc('admin_delete_quiz_question', params: {'p_id': id});
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
+  /// Hard-delete a quiz. The server cascades its questions and attempts via
+  /// foreign keys, so it disappears from the admin panel and becomes
+  /// unavailable to users. A real error is thrown (and surfaced) on failure.
+  Future<void> deleteQuiz(String id) async {
+    try {
+      await Db.client.rpc('admin_delete_quiz', params: {'p_id': id});
     } catch (e) {
       throw AppFailure.from(e);
     }

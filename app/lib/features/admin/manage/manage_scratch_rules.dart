@@ -7,9 +7,10 @@ import '../../../core/widgets/common.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../providers/repositories.dart';
 
-/// Admin table for Scratch Card rules (§2). Each rule is a band of the scratch
-/// sequence number → reward range, ads required, search-card delay and next
-/// scratch cooldown. Server also validates; the client mirrors the rules so the
+/// Admin table for Scratch Card rules. Each rule is a band of the day's scratch
+/// index → reward range, cooldown between scratches, wait-after-previous-rule
+/// and daily limit. Scratch always uses exactly ONE rewarded ad (not admin
+/// configurable). The server validates too; the client mirrors the rules so the
 /// admin sees errors immediately.
 final _scratchRulesProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
@@ -66,8 +67,8 @@ class ManageScratchRulesScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                        '${r['min_reward']}–${r['max_reward']} BCP • ${r['ads_required']} ad(s)\n'
-                        'Search delay ${r['search_delay_seconds']}s • cooldown ${_fmt(r['cooldown_seconds'])}'
+                        '${r['min_reward']}–${r['max_reward']} BCP • 1 ad\n'
+                        'Cooldown ${_fmt(r['cooldown_seconds'])}'
                         '${((r['wait_after_seconds'] as num?)?.toInt() ?? 0) > 0 ? '\nWait after previous rule: ${_fmt(r['wait_after_seconds'])}' : ''}'
                         '${((r['daily_limit'] as num?)?.toInt() ?? 0) > 0 ? '\nDaily limit: ${r['daily_limit']}' : ''}',
                         style: TextStyle(color: context.cx.textSecondary)),
@@ -122,9 +123,6 @@ class ManageScratchRulesScreen extends ConsumerWidget {
     final to = TextEditingController(text: '${r?['to_card'] ?? ''}');
     final min = TextEditingController(text: '${r?['min_reward'] ?? ''}');
     final max = TextEditingController(text: '${r?['max_reward'] ?? ''}');
-    final ads = TextEditingController(text: '${r?['ads_required'] ?? 1}');
-    final delay =
-        TextEditingController(text: '${r?['search_delay_seconds'] ?? 10}');
     final cooldown =
         TextEditingController(text: '${r?['cooldown_seconds'] ?? 3600}');
     final wait =
@@ -163,15 +161,16 @@ class ManageScratchRulesScreen extends ConsumerWidget {
                   Expanded(child: _num(max, 'Max reward (BCP)')),
                 ]),
                 const SizedBox(height: 10),
-                _num(ads, 'Ads required'),
-                const SizedBox(height: 10),
-                _num(delay, 'Search card delay after ad (seconds)'),
-                const SizedBox(height: 10),
-                _num(cooldown, 'Cooldown between cards (seconds)'),
+                _num(cooldown, 'Cooldown between scratches (seconds)'),
                 const SizedBox(height: 10),
                 _num(wait, 'Wait after previous rule (seconds)'),
                 const SizedBox(height: 10),
                 _num(daily, 'Daily limit (0 = none)'),
+                const SizedBox(height: 8),
+                Text(
+                    'Each scratch uses exactly one rewarded ad (skipped automatically '
+                    'when the Reward-ads master switch is off).',
+                    style: TextStyle(color: context.cx.textSecondary, fontSize: 12)),
                 SwitchListTile(
                   value: active,
                   onChanged: (v) => setState(() => active = v),
@@ -210,14 +209,14 @@ class ManageScratchRulesScreen extends ConsumerWidget {
       return;
     }
     try {
+      // Scratch always uses exactly ONE rewarded ad (not admin-configurable) —
+      // the repository + server force 1 ad / 0 delay.
       await ref.read(adminRepositoryProvider).saveScratchRule({
         'id': r?['id'],
         'from_card': fromV,
         'to_card': toV,
         'min_reward': minV,
         'max_reward': maxV,
-        'ads_required': int.tryParse(ads.text.trim()) ?? 1,
-        'search_delay_seconds': int.tryParse(delay.text.trim()) ?? 10,
         'cooldown_seconds': int.tryParse(cooldown.text.trim()) ?? 3600,
         'wait_after_seconds': int.tryParse(wait.text.trim()) ?? 0,
         'daily_limit': int.tryParse(daily.text.trim()) ?? 0,

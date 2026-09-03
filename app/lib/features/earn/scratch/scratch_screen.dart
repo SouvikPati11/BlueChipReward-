@@ -70,8 +70,15 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
   bool get _available => _status['available'] == true && _cardId != null;
   int get _adsRequired => (_status['ads_required'] as num?)?.toInt() ?? 1;
   int get _searchDelay => (_status['search_delay_seconds'] as num?)?.toInt() ?? 0;
+  bool get _cycleComplete => _status['cycle_complete'] == true;
   DateTime? get _nextAt {
     final s = _status['next_available_at'];
+    if (s is String && s.isNotEmpty) return DateTime.tryParse(s);
+    return null;
+  }
+
+  DateTime? get _nextCycleAt {
+    final s = _status['next_cycle_at'];
     if (s is String && s.isNotEmpty) return DateTime.tryParse(s);
     return null;
   }
@@ -188,6 +195,17 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
       );
 
   Widget _center() {
+    // Daily cycle complete → "come back tomorrow" with a server-authoritative
+    // countdown to the next UTC day (Rule 1 unlocks again when it finishes).
+    if (_cycleComplete && _nextCycleAt != null) {
+      return CycleCompleteView(
+        target: _nextCycleAt!,
+        onFinished: _load,
+        title: 'All Scratch Cards completed for today',
+        color: AppColors.gold,
+      );
+    }
+
     // Cooldown → countdown to the next scratch.
     if (!_available && _nextAt != null) {
       return Column(

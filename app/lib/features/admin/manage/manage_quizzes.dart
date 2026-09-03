@@ -47,7 +47,18 @@ class ManageQuizzesScreen extends ConsumerWidget {
                   subtitle: Text(
                       '${q['quiz_date']} • $count questions • ${q['reward']} BCP',
                       style: TextStyle(color: context.cx.textSecondary)),
-                  trailing: const Icon(Icons.chevron_right_rounded),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'Delete quiz',
+                        onPressed: () => _deleteQuiz(context, ref, q),
+                        icon: const Icon(Icons.delete_outline_rounded,
+                            color: AppColors.danger),
+                      ),
+                      const Icon(Icons.chevron_right_rounded),
+                    ],
+                  ),
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => _QuizQuestionsScreen(
                           quizId: q['id'] as String, title: q['title'] ?? ''))),
@@ -102,17 +113,78 @@ class ManageQuizzesScreen extends ConsumerWidget {
         ),
       ),
     );
-    if (ok != true || title.text.trim().isEmpty) return;
+    if (ok != true) return;
+    if (title.text.trim().isEmpty) {
+      if (context.mounted) showSnack(context, 'A quiz title is required', error: true);
+      return;
+    }
+    final rewardVal = int.tryParse(reward.text.trim());
+    if (rewardVal == null || rewardVal < 0) {
+      if (context.mounted) showSnack(context, 'Enter a valid reward (0 or more)', error: true);
+      return;
+    }
     try {
-      await ref.read(adminRepositoryProvider).createQuiz(
+      final id = await ref.read(adminRepositoryProvider).createQuiz(
             date.toIso8601String().split('T').first,
             title.text.trim(),
-            int.tryParse(reward.text.trim()) ?? 0,
+            rewardVal,
           );
       ref.invalidate(adminQuizzesProvider);
+      if (context.mounted) {
+        showSnack(context, 'Quiz saved. Add questions to make it go live.');
+        // Open the questions editor so the new quiz can be filled in — a quiz
+        // with no questions is never served to users.
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) =>
+                _QuizQuestionsScreen(quizId: id, title: title.text.trim())));
+      }
     } catch (e) {
-      if (context.mounted) showSnack(context, '$e', error: true);
+      // Real error surfaced — never a fake success.
+      if (context.mounted) showSnack(context, _quizError('$e'), error: true);
     }
+  }
+
+  /// Confirm, then hard-delete the real quiz record. On success it disappears
+  /// from the admin panel and becomes unavailable to users (server cascades its
+  /// questions + attempts). On failure the real error is shown — no fake toast.
+  Future<void> _deleteQuiz(
+      BuildContext context, WidgetRef ref, Map<String, dynamic> q) async {
+    final title = (q['title'] as String?) ?? 'this quiz';
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete quiz?'),
+        content: Text(
+            'Delete "$title" and all of its questions? This cannot be undone, '
+            'and the quiz will no longer be available to users.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    try {
+      await ref.read(adminRepositoryProvider).deleteQuiz(q['id'] as String);
+      ref.invalidate(adminQuizzesProvider);
+      if (context.mounted) showSnack(context, 'Quiz deleted');
+    } catch (e) {
+      if (context.mounted) showSnack(context, _quizError('$e'), error: true);
+    }
+  }
+
+  static String _quizError(String e) {
+    if (e.contains('QUIZ_NOT_FOUND')) return 'That quiz no longer exists.';
+    if (e.contains('NOT_ADMIN') || e.contains('FORBIDDEN')) {
+      return 'You do not have permission to do that.';
+    }
+    return e;
   }
 }
 

@@ -50,9 +50,16 @@ class _WatchAdsScreenState extends ConsumerState<WatchAdsScreen> {
   int get _max => (_status['max_reward'] as num?)?.toInt() ?? 0;
   int get _remainingToday => (_status['remaining_today'] as num?)?.toInt() ?? 0;
   bool get _available => _status['available'] == true;
+  bool get _cycleComplete => _status['cycle_complete'] == true;
 
   DateTime? get _nextAt {
     final s = _status['next_available_at'];
+    if (s is String && s.isNotEmpty) return DateTime.tryParse(s);
+    return null;
+  }
+
+  DateTime? get _nextCycleAt {
+    final s = _status['next_cycle_at'];
     if (s is String && s.isNotEmpty) return DateTime.tryParse(s);
     return null;
   }
@@ -96,7 +103,8 @@ class _WatchAdsScreenState extends ConsumerState<WatchAdsScreen> {
         ? 'Watch & Earn'
         : (_min == _max ? 'Earn up to $_max BCP' : 'Earn $_min–$_max BCP per ad');
 
-    final onCooldown = !_available && _nextAt != null;
+    final cycleComplete = _cycleComplete && _nextCycleAt != null;
+    final onCooldown = !_available && !cycleComplete && _nextAt != null;
     final limitReached = _remainingToday <= 0 && !_available;
 
     return Scaffold(
@@ -149,9 +157,18 @@ class _WatchAdsScreenState extends ConsumerState<WatchAdsScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
+                        // Daily cycle complete → "come back tomorrow" with a
+                        // server-authoritative countdown to the next UTC day.
+                        if (cycleComplete)
+                          CycleCompleteView(
+                            target: _nextCycleAt!,
+                            onFinished: _load,
+                            title: "Today's ads completed",
+                            color: AppColors.success,
+                          )
                         // Cooldown line — server-authoritative absolute time, so
                         // it stays correct across app close/reopen.
-                        if (onCooldown)
+                        else if (onCooldown)
                           Center(
                             child: CountdownText(
                               target: _nextAt,
@@ -175,8 +192,12 @@ class _WatchAdsScreenState extends ConsumerState<WatchAdsScreen> {
                           ),
                         const SizedBox(height: 12),
                         ElevatedButton.icon(
-                          onPressed:
-                              (_busy || onCooldown || limitReached) ? null : _watch,
+                          onPressed: (_busy ||
+                                  onCooldown ||
+                                  limitReached ||
+                                  cycleComplete)
+                              ? null
+                              : _watch,
                           icon: _busy
                               ? const SizedBox(
                                   height: 20,

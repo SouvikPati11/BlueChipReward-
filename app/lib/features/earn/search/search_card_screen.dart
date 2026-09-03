@@ -71,8 +71,15 @@ class _SearchCardScreenState extends ConsumerState<SearchCardScreen> {
   bool get _available => _status['available'] == true;
   bool get _hasRule => _status['has_rule'] == true;
   bool get _adRequired => _status['ad_required'] == true;
+  bool get _cycleComplete => _status['cycle_complete'] == true;
   DateTime? get _nextAt {
     final s = _status['next_available_at'];
+    if (s is String && s.isNotEmpty) return DateTime.tryParse(s);
+    return null;
+  }
+
+  DateTime? get _nextCycleAt {
+    final s = _status['next_cycle_at'];
     if (s is String && s.isNotEmpty) return DateTime.tryParse(s);
     return null;
   }
@@ -195,6 +202,16 @@ class _SearchCardScreenState extends ConsumerState<SearchCardScreen> {
   }
 
   Widget _center(bool onCooldown, bool limitReached) {
+    // Daily cycle complete → "come back tomorrow" with a countdown to the next
+    // UTC day (server-authoritative; searches unlock again when it finishes).
+    if (_cycleComplete && _nextCycleAt != null) {
+      return CycleCompleteView(
+        target: _nextCycleAt!,
+        onFinished: _load,
+        title: 'All searches completed for today',
+        color: AppColors.info,
+      );
+    }
     if (!_hasRule) {
       return const EmptyView(
           icon: Icons.travel_explore_rounded,
