@@ -25,6 +25,20 @@ Future<void> main() async {
 
     await AppConfig.load();
 
+    // Development diagnostics (debug/profile only, via assert): a SAFE summary
+    // of the runtime config — booleans + lengths only, never the URL, key, or
+    // any secret value — so a "login won't work" report can be traced to a
+    // missing/misconfigured Supabase config directly from logcat.
+    assert(() {
+      final url = AppConfig.supabaseUrl;
+      final key = AppConfig.supabaseAnonKey;
+      debugPrint('BlueChip config → configured=${AppConfig.isConfigured} '
+          'urlHttps=${url.startsWith('https://')} urlLen=${url.length} '
+          'keyPresent=${key.isNotEmpty} keyLooksJwt=${key.startsWith('eyJ')} '
+          'keyLen=${key.length}');
+      return true;
+    }());
+
     // Supabase is required; if it is unconfigured or fails to initialise we
     // still boot and show a clear message instead of crashing.
     var initError = false;

@@ -33,31 +33,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _login() async {
     if (!_form.currentState!.validate()) return;
     setState(() => _loading = true);
+    // Authentication only. A failure HERE is a real sign-in failure.
     try {
       await ref.read(authRepositoryProvider).signInEmail(
             email: _email.text.trim(),
             password: _password.text,
           );
-      if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) showSnack(context, '$e', error: true);
+      return; // do not navigate on an auth failure
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+    // Authentication succeeded → navigate. Any error after this point is a
+    // post-login/navigation problem and must NOT be reported as a login failure
+    // (the session is already established; the router will land on Home).
+    if (mounted) context.go('/home');
   }
 
   Future<void> _google_() async {
     setState(() => _google = true);
     try {
       await ref.read(authRepositoryProvider).signInWithGoogle();
-      if (mounted) context.go('/home');
     } catch (e) {
       if (mounted && '$e' != 'Sign-in cancelled.') {
         showSnack(context, '$e', error: true);
       }
+      return;
     } finally {
       if (mounted) setState(() => _google = false);
     }
+    if (mounted) context.go('/home');
   }
 
   @override

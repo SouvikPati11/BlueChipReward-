@@ -37,15 +37,42 @@ class AppConfig {
     return _env[key] ?? '';
   }
 
-  static String get supabaseUrl => _get(
+  static String get supabaseUrl => _normalizeUrl(_get(
         'SUPABASE_URL',
         const String.fromEnvironment('SUPABASE_URL'),
-      );
+      ));
 
-  static String get supabaseAnonKey => _get(
+  static String get supabaseAnonKey => _unquote(_get(
         'SUPABASE_ANON_KEY',
         const String.fromEnvironment('SUPABASE_ANON_KEY'),
-      );
+      ));
+
+  /// Defensive normalisation for the Supabase URL. A URL that is missing the
+  /// scheme, or that carries a trailing slash, makes gotrue build endpoints like
+  /// `https://ref.supabase.co//auth/v1/token`, whose non-JSON error page then
+  /// fails to decode — surfacing as a generic FormatException at sign-in instead
+  /// of a clean auth error. Fixing the value here makes sign-in robust to a
+  /// mistyped secret without ever changing a correctly-entered URL.
+  static String _normalizeUrl(String value) {
+    var s = _unquote(value);
+    if (s.isEmpty) return s;
+    if (!s.startsWith('http://') && !s.startsWith('https://')) s = 'https://$s';
+    while (s.endsWith('/')) {
+      s = s.substring(0, s.length - 1);
+    }
+    return s;
+  }
+
+  /// Strip surrounding quotes/whitespace a build-time value may carry.
+  static String _unquote(String value) {
+    var s = value.trim();
+    if (s.length >= 2 &&
+        ((s.startsWith('"') && s.endsWith('"')) ||
+            (s.startsWith("'") && s.endsWith("'")))) {
+      s = s.substring(1, s.length - 1).trim();
+    }
+    return s;
+  }
 
   static String get googleWebClientId => _get(
         'GOOGLE_WEB_CLIENT_ID',
