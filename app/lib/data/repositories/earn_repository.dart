@@ -40,11 +40,18 @@ class EarnRepository {
 
   Future<Map<String, dynamic>> scratchConfig() => _rpc('scratch_config');
 
-  /// Reveal with the required number of completed rewarded-ad nonces. The
-  /// server enforces ads-required, the Search-Card delay and the cooldown.
-  Future<Map<String, dynamic>> scratchReveal(String cardId,
-          {List<String> nonces = const []}) =>
-      _rpc('scratch_reveal', {'p_card_id': cardId, 'p_nonces': nonces});
+  /// Reveal the exact reward amount for a card WITHOUT crediting it (no ad).
+  /// The amount was decided server-side when the card was issued; this only
+  /// exposes it and marks the card revealed. Idempotent.
+  Future<Map<String, dynamic>> scratchReveal(String cardId) =>
+      _rpc('scratch_reveal', {'p_card_id': cardId});
+
+  /// Claim the revealed reward. When a rewarded ad is required, [nonce] is the
+  /// completed ad nonce; the server verifies it and only then credits the exact
+  /// revealed amount to the ledger. Duplicate-safe (idempotent per card).
+  Future<Map<String, dynamic>> scratchClaim(String cardId, {String? nonce}) =>
+      _rpc('scratch_claim',
+          {'p_card_id': cardId, if (nonce != null) 'p_nonce': nonce});
 
   // ---- Ads -----------------------------------------------------------------
   Future<AdsConfig> adsConfig() async =>

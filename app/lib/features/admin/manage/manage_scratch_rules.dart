@@ -156,16 +156,16 @@ class ManageScratchRulesScreen extends ConsumerWidget {
                 ]),
                 const SizedBox(height: 10),
                 Row(children: [
-                  Expanded(child: _num(min, 'Min reward (BCP)')),
+                  Expanded(child: _num(min, 'Min BCP')),
                   const SizedBox(width: 10),
-                  Expanded(child: _num(max, 'Max reward (BCP)')),
+                  Expanded(child: _num(max, 'Max BCP')),
                 ]),
                 const SizedBox(height: 10),
                 _num(cooldown, 'Cooldown between scratches (seconds)'),
                 const SizedBox(height: 10),
                 _num(wait, 'Wait after previous rule (seconds)'),
                 const SizedBox(height: 10),
-                _num(daily, 'Daily limit (0 = none)'),
+                _num(daily, 'Daily limit (0 = auto)'),
                 const SizedBox(height: 8),
                 Text(
                     'Each scratch uses exactly one rewarded ad (skipped automatically '

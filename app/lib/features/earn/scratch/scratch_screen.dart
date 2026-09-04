@@ -11,9 +11,14 @@ import '../../../providers/data_providers.dart';
 import '../../../providers/repositories.dart';
 import 'package:bluechip_rewards/core/theme/app_palette.dart';
 
-/// Admin-rule-driven scratch: the server decides eligibility, ads required,
-/// the Search-Card delay, the cooldown and the reward (random within the rule's
-/// range). The client only reflects that state and shows live countdowns.
+/// Scratch Card — server-authoritative, ad-gated, duplicate-safe.
+///
+/// Flow (matches Search Card semantics): the screen shows the possible reward
+/// RANGE before scratching; the user scratches to REVEAL the exact amount the
+/// server already decided (nothing is credited yet); then a single rewarded ad
+/// is required; only after the ad completes does the server verify and CREDIT
+/// that exact amount to the wallet/ledger. When the Reward-ads master is off,
+/// no ad is required and the reveal is credited directly.
 class ScratchScreen extends ConsumerStatefulWidget {
   const ScratchScreen({super.key});
 
@@ -21,7 +26,7 @@ class ScratchScreen extends ConsumerStatefulWidget {
   ConsumerState<ScratchScreen> createState() => _ScratchScreenState();
 }
 
-enum _Phase { idle, watchingAds, searchDelay, revealing, revealed }
+enum _Phase { idle, revealing, revealed, claiming, done }
 
 class _ScratchScreenState extends ConsumerState<ScratchScreen> {
   bool _loading = true;
@@ -30,13 +35,12 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
   List<Map<String, dynamic>> _rules = const [];
 
   _Phase _phase = _Phase.idle;
-  final List<String> _nonces = [];
-  DateTime? _searchUntil;
-  int? _amount;
+  int? _amount; // the revealed / credited amount
 
   @override
   void initState() {
     super.initState();
+    ref.read(rewardedAdServiceProvider).preload();
     _load();
   }
 
@@ -45,8 +49,6 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
       _loading = true;
       _error = null;
       _phase = _Phase.idle;
-      _nonces.clear();
-      _searchUntil = null;
       _amount = null;
     });
     try {
@@ -58,7 +60,17 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
             .toList();
       } catch (_) {}
       final s = await repo.scratchStatus();
-      if (mounted) setState(() => _status = s);
+      if (mounted) {
+        setState(() {
+          _status = s;
+          // Resume the claim step if the card was already revealed (e.g. the
+          // user revealed, then closed the app before watching the ad).
+          if (s['revealed'] == true && s['amount'] != null) {
+            _amount = (s['amount'] as num).toInt();
+            _phase = _Phase.revealed;
+          }
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
     } finally {
@@ -68,9 +80,11 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
 
   String? get _cardId => _status['card_id'] as String?;
   bool get _available => _status['available'] == true && _cardId != null;
-  int get _adsRequired => (_status['ads_required'] as num?)?.toInt() ?? 1;
-  int get _searchDelay => (_status['search_delay_seconds'] as num?)?.toInt() ?? 0;
+  bool get _adRequired => _status['ad_required'] == true;
   bool get _cycleComplete => _status['cycle_complete'] == true;
+  int get _min => (_status['min_reward'] as num?)?.toInt() ?? 0;
+  int get _max => (_status['max_reward'] as num?)?.toInt() ?? 0;
+
   DateTime? get _nextAt {
     final s = _status['next_available_at'];
     if (s is String && s.isNotEmpty) return DateTime.tryParse(s);
@@ -83,60 +97,22 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
     return null;
   }
 
-  Future<void> _startScratch() async {
-    if (_cardId == null || _phase != _Phase.idle) return;
-    // 1) Watch the required number of rewarded ads, collecting nonces. If the
-    // admin has disabled rewarded ads (master/section OFF), runRewardedGate
-    // returns null and we reveal directly — the server also skips the ad
-    // requirement in that case, so no ad is required anywhere.
-    _nonces.clear();
-    var adsSkipped = false;
-    if (_adsRequired > 0) {
-      setState(() => _phase = _Phase.watchingAds);
-      for (var i = 0; i < _adsRequired; i++) {
-        String? nonce;
-        try {
-          nonce = await runRewardedGate(ref, 'scratch');
-        } catch (e) {
-          if (mounted) showSnack(context, '$e', error: true);
-          setState(() => _phase = _Phase.idle);
-          return;
-        }
-        if (nonce == null) {
-          // Rewarded ads disabled by admin → skip ads and reveal directly.
-          adsSkipped = true;
-          _nonces.clear();
-          break;
-        }
-        _nonces.add(nonce);
-      }
-    }
-    // 2) Search-Card delay countdown (only when an ad was actually watched),
-    // then reveal.
-    if (!adsSkipped && _searchDelay > 0) {
-      setState(() {
-        _phase = _Phase.searchDelay;
-        _searchUntil = DateTime.now().add(Duration(seconds: _searchDelay));
-      });
-    } else {
-      _reveal();
-    }
-  }
-
+  /// Step 1 — scratch to reveal the exact amount (no ad, no credit yet).
   Future<void> _reveal() async {
-    if (_cardId == null) return;
+    if (_cardId == null || _phase != _Phase.idle) return;
     setState(() => _phase = _Phase.revealing);
     try {
-      final res = await ref
-          .read(earnRepositoryProvider)
-          .scratchReveal(_cardId!, nonces: List<String>.from(_nonces));
-      ref.invalidate(walletProvider);
-      ref.invalidate(transactionsProvider);
-      if (mounted) {
-        setState(() {
-          _amount = (res['amount'] as num).toInt();
-          _phase = _Phase.revealed;
-        });
+      final res = await ref.read(earnRepositoryProvider).scratchReveal(_cardId!);
+      if (!mounted) return;
+      // If the server says it was already credited, jump to done.
+      final credited = res['credited'] == true;
+      setState(() {
+        _amount = (res['amount'] as num).toInt();
+        _phase = credited ? _Phase.done : _Phase.revealed;
+      });
+      if (credited) {
+        ref.invalidate(walletProvider);
+        ref.invalidate(transactionsProvider);
       }
     } catch (e) {
       if (mounted) {
@@ -146,12 +122,47 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
     }
   }
 
-  String _friendly(String e) {
-    if (e.contains('SEARCH_DELAY_ACTIVE')) {
-      return 'Please wait for the Search Card delay to finish.';
+  /// Step 2 — watch the required rewarded ad, then the server verifies it and
+  /// credits the exact revealed amount. Nothing is credited without the ad
+  /// (unless the Reward-ads master is off, in which case no ad is required).
+  Future<void> _claim() async {
+    if (_cardId == null || _phase != _Phase.revealed) return;
+    setState(() => _phase = _Phase.claiming);
+    try {
+      String? nonce;
+      if (_adRequired) {
+        nonce = await runRewardedGate(ref, 'scratch');
+        // nonce == null → admin disabled rewarded ads after status loaded; the
+        // server also treats it as ungated, so we proceed and it credits.
+      }
+      final res = await ref
+          .read(earnRepositoryProvider)
+          .scratchClaim(_cardId!, nonce: nonce);
+      ref.invalidate(walletProvider);
+      ref.invalidate(transactionsProvider);
+      if (mounted) {
+        setState(() {
+          _amount = (res['amount'] as num).toInt();
+          _phase = _Phase.done;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        showSnack(context, _friendly('$e'), error: true);
+        setState(() => _phase = _Phase.revealed); // let them retry the ad
+      }
     }
-    if (e.contains('AD_REQUIRED')) return 'Please watch the required ad(s) first.';
+  }
+
+  String _friendly(String e) {
+    if (e.contains('AD_REQUIRED')) return 'Watch the full ad to claim your reward.';
+    if (e.contains('AD_NOT_COMPLETED')) {
+      return 'Please watch the full ad to claim your reward.';
+    }
     if (e.contains('AD_ALREADY_USED')) return 'That ad was already used.';
+    if (e.contains('AD_DAILY_LIMIT')) return 'You have reached today\'s ad limit.';
+    if (e.contains('NOT_REVEALED')) return 'Scratch the card first.';
+    if (e.contains('CARD_NOT_FOUND')) return 'This card is no longer available.';
     return e;
   }
 
@@ -195,8 +206,7 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
       );
 
   Widget _center() {
-    // Daily cycle complete → "come back tomorrow" with a server-authoritative
-    // countdown to the next UTC day (Rule 1 unlocks again when it finishes).
+    // Daily cycle complete → come back tomorrow.
     if (_cycleComplete && _nextCycleAt != null) {
       return CycleCompleteView(
         target: _nextCycleAt!,
@@ -207,7 +217,7 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
     }
 
     // Cooldown → countdown to the next scratch.
-    if (!_available && _nextAt != null) {
+    if (!_available && _nextAt != null && _phase == _Phase.idle) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -241,63 +251,88 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
       );
     }
 
-    // Search-Card delay countdown.
-    if (_phase == _Phase.searchDelay) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.search_rounded, size: 56, color: AppColors.primary),
-          const SizedBox(height: 16),
-          Text('Search Card available in',
-              style: TextStyle(color: context.cx.textSecondary)),
-          const SizedBox(height: 6),
-          CountdownText(
-            target: _searchUntil,
-            onFinished: _reveal,
-            style: const TextStyle(
-                fontSize: 34, fontWeight: FontWeight.w900, color: AppColors.primary),
-            finishedChild: const Text('Revealing…',
-                style: TextStyle(fontWeight: FontWeight.w700)),
-          ),
-        ],
-      );
-    }
+    final revealedOrLater =
+        _phase == _Phase.revealed || _phase == _Phase.claiming || _phase == _Phase.done;
 
-    // The card + scratch button.
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _card(),
+        // Before scratching: show the possible reward range for this card.
+        if (_phase == _Phase.idle && _max > 0) ...[
+          Text(_min == _max ? 'Win $_max BCP' : 'Win $_min–$_max BCP',
+              style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.gold)),
+          const SizedBox(height: 14),
+        ],
+        _card(revealedOrLater),
         const SizedBox(height: 20),
         if (_phase == _Phase.idle)
           ElevatedButton.icon(
-            onPressed: _startScratch,
-            icon: const Icon(Icons.smart_display_rounded),
-            label: Text(_adsRequired > 0
-                ? 'Watch ${_adsRequired == 1 ? 'ad' : '$_adsRequired ads'} & scratch'
-                : 'Scratch now'),
+            onPressed: _reveal,
+            icon: const Icon(Icons.auto_awesome_rounded),
+            label: const Text('Scratch'),
           )
-        else if (_phase == _Phase.watchingAds)
+        else if (_phase == _Phase.revealing)
+          const Text('Revealing…', style: TextStyle(fontWeight: FontWeight.w600))
+        else if (_phase == _Phase.revealed)
+          Column(
+            children: [
+              Text(
+                  _adRequired
+                      ? 'Watch a short ad to claim your $_amount BCP.'
+                      : 'Claim your $_amount BCP.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: context.cx.textSecondary)),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: _claim,
+                icon: Icon(_adRequired
+                    ? Icons.smart_display_rounded
+                    : Icons.redeem_rounded),
+                label: Text(_adRequired ? 'Watch ad & claim' : 'Claim reward'),
+              ),
+            ],
+          )
+        else if (_phase == _Phase.claiming)
           const Text('Loading ad…', style: TextStyle(fontWeight: FontWeight.w600))
-        else if (_phase == _Phase.revealed && _amount != null)
-          ElevatedButton.icon(
-            onPressed: _load,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Continue'),
+        else if (_phase == _Phase.done)
+          Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.verified_rounded,
+                      color: AppColors.success, size: 22),
+                  const SizedBox(width: 6),
+                  Text('$_amount BCP credited',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.success)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: _load,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Continue'),
+              ),
+            ],
           ),
       ],
     );
   }
 
-  Widget _card() {
-    final revealed = _phase == _Phase.revealed;
-    final revealing = _phase == _Phase.revealing;
+  /// [showAmount] when the card should display the revealed amount (revealed /
+  /// claiming / done); otherwise the face-down "SCRATCH CARD".
+  Widget _card(bool showAmount) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       width: 240,
       height: 280,
       decoration: BoxDecoration(
-        gradient: revealed
+        gradient: showAmount
             ? AppColors.goldGradient
             : const LinearGradient(
                 colors: [Color(0xFF94A3B8), Color(0xFFCBD5E1)],
@@ -313,16 +348,16 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
         ],
       ),
       child: Center(
-        child: revealing
+        child: _phase == _Phase.revealing
             ? const CircularProgressIndicator(color: Colors.white)
-            : revealed
+            : showAmount
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.emoji_events_rounded,
                           color: Colors.white, size: 60),
                       const SizedBox(height: 12),
-                      Text('+$_amount',
+                      Text('+${_amount ?? 0}',
                           style: const TextStyle(
                               color: Colors.white,
                               fontSize: 48,
@@ -332,6 +367,15 @@ class _ScratchScreenState extends ConsumerState<ScratchScreen> {
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700)),
+                      if (_phase == _Phase.revealed)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                              _adRequired ? 'Watch ad to claim' : 'Tap to claim',
+                              style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w600)),
+                        ),
                     ],
                   )
                 : Column(
