@@ -10,15 +10,25 @@ import '../../../providers/repositories.dart';
 import '../admin_providers.dart';
 
 /// Control type for a setting.
-enum SettingKind { toggle, number, percent, text, json }
+enum SettingKind { toggle, number, percent, text, json, choice }
 
 class _Spec {
   final String key;
   final String label;
   final String? help;
   final SettingKind kind;
-  const _Spec(this.key, this.label, this.kind, [this.help]);
+  // For [SettingKind.choice]: the allowed values (stored) in order.
+  final List<String>? options;
+  const _Spec(this.key, this.label, this.kind, [this.help, this.options]);
 }
+
+/// The selectable ad networks (stored value → display label).
+const List<String> _adNetworks = ['admob', 'applovin', 'unity'];
+const Map<String, String> _adNetworkLabels = {
+  'admob': 'AdMob',
+  'applovin': 'AppLovin',
+  'unity': 'Unity Ads',
+};
 
 /// Human-readable, categorized admin settings (no raw key dumps). Any setting
 /// not covered by a spec below still appears under "Other" as a JSON editor, so
@@ -103,6 +113,44 @@ class AdminSettingsTab extends ConsumerWidget {
       _Spec('banner_quiz', 'Quiz · banner', SettingKind.toggle),
       _Spec('banner_tasks', 'Tasks · banner', SettingKind.toggle),
       _Spec('banner_search', 'Search Card · banner', SettingKind.toggle),
+    ],
+    'Ad Networks (per placement)': [
+      // Test ads only. AdMob works out of the box; AppLovin/Unity require their
+      // account keys (APPLOVIN_SDK_KEY / UNITY_GAME_ID) — until then a placement
+      // set to them falls back to AdMob test ads. Rewarded network per placement:
+      _Spec('ad_network_daily', 'Daily · rewarded network', SettingKind.choice,
+          null, _adNetworks),
+      _Spec('ad_network_scratch', 'Scratch · rewarded network',
+          SettingKind.choice, null, _adNetworks),
+      _Spec('ad_network_mining', 'Mining · rewarded network',
+          SettingKind.choice, null, _adNetworks),
+      _Spec('ad_network_watch_ads', 'Watch Ads · rewarded network',
+          SettingKind.choice, null, _adNetworks),
+      _Spec('ad_network_quiz', 'Quiz · rewarded network', SettingKind.choice,
+          null, _adNetworks),
+      _Spec('ad_network_tasks', 'Tasks · rewarded network', SettingKind.choice,
+          null, _adNetworks),
+      _Spec('ad_network_contest', 'Contest · rewarded network',
+          SettingKind.choice, null, _adNetworks),
+      _Spec('ad_network_search', 'Search Card · rewarded network',
+          SettingKind.choice, null, _adNetworks),
+      // Banner network per placement:
+      _Spec('banner_network_daily', 'Daily · banner network',
+          SettingKind.choice, null, _adNetworks),
+      _Spec('banner_network_scratch', 'Scratch · banner network',
+          SettingKind.choice, null, _adNetworks),
+      _Spec('banner_network_mining', 'Mining · banner network',
+          SettingKind.choice, null, _adNetworks),
+      _Spec('banner_network_watch_ads', 'Watch Ads · banner network',
+          SettingKind.choice, null, _adNetworks),
+      _Spec('banner_network_quiz', 'Quiz · banner network', SettingKind.choice,
+          null, _adNetworks),
+      _Spec('banner_network_tasks', 'Tasks · banner network',
+          SettingKind.choice, null, _adNetworks),
+      _Spec('banner_network_contest', 'Contest · banner network',
+          SettingKind.choice, null, _adNetworks),
+      _Spec('banner_network_search', 'Search Card · banner network',
+          SettingKind.choice, null, _adNetworks),
     ],
     'Automatic reminders': [
       _Spec('reminder_daily_enabled', 'Daily reward reminder',
@@ -332,6 +380,42 @@ class _SettingControlState extends State<_SettingControl> {
       );
     }
 
+    if (sp.kind == SettingKind.choice) {
+      final opts = sp.options ?? const <String>[];
+      final cur = '${widget.value ?? ''}';
+      final selected = opts.contains(cur) ? cur : (opts.isNotEmpty ? opts.first : null);
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(sp.label),
+                  if (sp.help != null)
+                    Text(sp.help!,
+                        style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            DropdownButton<String>(
+              value: selected,
+              onChanged: (v) {
+                if (v != null) widget.onSave(v);
+              },
+              items: [
+                for (final o in opts)
+                  DropdownMenuItem(
+                      value: o, child: Text(_adNetworkLabels[o] ?? o)),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     final isNum =
         sp.kind == SettingKind.number || sp.kind == SettingKind.percent;
     return Padding(
@@ -379,6 +463,9 @@ class _SettingControlState extends State<_SettingControl> {
                     break;
                   case SettingKind.toggle:
                     value = _bool;
+                    break;
+                  case SettingKind.choice:
+                    value = text; // choice saves via its dropdown, not here
                     break;
                 }
               } catch (_) {

@@ -89,6 +89,20 @@ class AppConfig {
         const String.fromEnvironment('ADMOB_BANNER_AD_UNIT'),
       );
 
+  // AppLovin MAX / Unity Ads identifiers. These are account-level keys (NOT
+  // production ad-unit ids); the SDKs cannot initialise — even in test mode —
+  // without them. When empty, that network is left uninitialised and any
+  // placement configured to use it falls back to AdMob test ads.
+  static String get applovinSdkKey => _get(
+        'APPLOVIN_SDK_KEY',
+        const String.fromEnvironment('APPLOVIN_SDK_KEY'),
+      );
+
+  static String get unityGameId => _get(
+        'UNITY_GAME_ID',
+        const String.fromEnvironment('UNITY_GAME_ID'),
+      );
+
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty &&
       !supabaseUrl.contains('YOUR-PROJECT') &&

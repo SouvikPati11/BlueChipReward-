@@ -1,12 +1,15 @@
 import 'dart:async';
 
+import 'package:applovin_max/applovin_max.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unity_ads_plugin/unity_ads_plugin.dart';
 
 import 'app.dart';
+import 'core/ads/rewarded_ad_manager.dart';
 import 'core/config/app_config.dart';
 import 'core/push/push_service.dart';
 import 'core/push/reminder_service.dart';
@@ -59,6 +62,31 @@ Future<void> main() async {
     // must never affect startup.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       MobileAds.instance.initialize().then((_) {}, onError: (_) {});
+
+      // AppLovin MAX / Unity Ads initialise ONLY when their account keys are
+      // configured (they cannot run — even in test mode — without them). When a
+      // key is absent the network stays uninitialised and any placement set to
+      // it falls back to AdMob test ads. Failures here never affect startup.
+      try {
+        final applovinKey = AppConfig.applovinSdkKey;
+        if (applovinKey.isNotEmpty) {
+          AppLovinMAX.initialize(applovinKey).then(
+            (_) => RewardedAdManager.applovinReady = true,
+            onError: (_) {},
+          );
+        }
+      } catch (_) {/* non-fatal */}
+      try {
+        final unityId = AppConfig.unityGameId;
+        if (unityId.isNotEmpty) {
+          UnityAds.init(
+            gameId: unityId,
+            testMode: true,
+            onComplete: () => RewardedAdManager.unityReady = true,
+            onFailed: (error, message) {},
+          );
+        }
+      } catch (_) {/* non-fatal */}
 
       if (!initError) {
         await PushService.init();

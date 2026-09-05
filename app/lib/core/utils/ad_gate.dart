@@ -2,12 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/data_providers.dart';
 import '../../providers/repositories.dart';
+import '../ads/rewarded_ad_manager.dart';
 import '../error/failure.dart';
-import 'rewarded_ad_service.dart';
 
-/// One app-wide rewarded-ad loader so ads can be preloaded and reused.
-final rewardedAdServiceProvider = Provider<RewardedAdService>((ref) {
-  final service = RewardedAdService();
+/// One app-wide rewarded-ad manager. Preloads/reuses ads and routes each
+/// request to the admin-selected network for the placement (AdMob today;
+/// AppLovin/Unity fall back to AdMob until their keys are supplied).
+final rewardedAdServiceProvider = Provider<RewardedAdManager>((ref) {
+  final service = RewardedAdManager();
   ref.onDispose(service.dispose);
   return service;
 });
@@ -33,11 +35,15 @@ Future<String?> runRewardedGate(WidgetRef ref, String placement) async {
   final repo = ref.read(earnRepositoryProvider);
   final ads = ref.read(rewardedAdServiceProvider);
 
+  // Admin-selected network for this placement (AdMob / AppLovin / Unity).
+  final network = adNetworkFromString(cfg?.networkFor(placement));
+
   final nonce = await repo.adBegin(placement);
   var impressed = false;
   var earned = false;
 
   final shown = await ads.show(
+    network,
     onImpression: () => impressed = true,
     onEarned: () => earned = true,
   );

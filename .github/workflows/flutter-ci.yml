@@ -86,6 +86,8 @@ jobs:
           GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
           ADMOB_REWARDED_AD_UNIT: ${{ secrets.ADMOB_REWARDED_AD_UNIT }}
           ADMOB_BANNER_AD_UNIT: ${{ secrets.ADMOB_BANNER_AD_UNIT }}
+          APPLOVIN_SDK_KEY: ${{ secrets.APPLOVIN_SDK_KEY }}
+          UNITY_GAME_ID: ${{ secrets.UNITY_GAME_ID }}
         run: |
           cat > assets/config.env <<EOF
           SUPABASE_URL=${SUPABASE_URL:-https://YOUR-PROJECT-ref.supabase.co}
@@ -93,6 +95,8 @@ jobs:
           GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID:-}
           ADMOB_REWARDED_AD_UNIT=${ADMOB_REWARDED_AD_UNIT:-ca-app-pub-3940256099942544/5224354917}
           ADMOB_BANNER_AD_UNIT=${ADMOB_BANNER_AD_UNIT:-ca-app-pub-3940256099942544/6300978111}
+          APPLOVIN_SDK_KEY=${APPLOVIN_SDK_KEY:-}
+          UNITY_GAME_ID=${UNITY_GAME_ID:-}
           EOF
 
       - name: Configuration status (no secret values printed)

@@ -281,10 +281,20 @@ class InviteMilestonesOverview {
 class AdsSectionConfig {
   final bool rewarded;
   final bool banner;
-  const AdsSectionConfig({required this.rewarded, required this.banner});
+  // Admin-selected ad network for this placement: 'admob' | 'applovin' | 'unity'.
+  final String network;
+  final String bannerNetwork;
+  const AdsSectionConfig({
+    required this.rewarded,
+    required this.banner,
+    this.network = 'admob',
+    this.bannerNetwork = 'admob',
+  });
   factory AdsSectionConfig.fromJson(Map<String, dynamic> j) => AdsSectionConfig(
         rewarded: j['rewarded'] as bool? ?? true,
         banner: j['banner'] as bool? ?? true,
+        network: (j['network'] as String?) ?? 'admob',
+        bannerNetwork: (j['banner_network'] as String?) ?? 'admob',
       );
 }
 
@@ -309,6 +319,10 @@ class AdsConfig {
 
   bool rewardedFor(String key) => system && rewardedGlobal && section(key).rewarded;
   bool bannerFor(String key) => system && bannerGlobal && section(key).banner;
+
+  /// Admin-selected network for this placement's rewarded ad / banner.
+  String networkFor(String key) => section(key).network;
+  String bannerNetworkFor(String key) => section(key).bannerNetwork;
 
   factory AdsConfig.fromJson(Map<String, dynamic> j) {
     final secs = <String, AdsSectionConfig>{};

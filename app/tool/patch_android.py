@@ -157,6 +157,18 @@ def patch_manifest():
             "the app would crash at startup. Aborting the build."
         )
 
+    # 3. AppLovin SDK key meta-data — ONLY when a key is supplied. Without it the
+    #    AppLovin network stays uninitialised and placements fall back to AdMob.
+    _applovin_key = os.environ.get("APPLOVIN_SDK_KEY", "").strip()
+    if _applovin_key and "applovin.sdk.key" not in xml:
+        meta = (
+            '        <meta-data\n'
+            '            android:name="applovin.sdk.key"\n'
+            f'            android:value="{_applovin_key}"/>\n'
+        )
+        xml = re.sub(r"(<application\b[^>]*>)", r"\1\n" + meta, xml, count=1)
+        print("patched AndroidManifest.xml (AppLovin SDK key present)")
+
     with open(MANIFEST, "w", encoding="utf-8") as f:
         f.write(xml)
     print(f"patched AndroidManifest.xml (AdMob app id: {_APP_ID_SOURCE})")

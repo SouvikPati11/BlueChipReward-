@@ -1,7 +1,7 @@
 name: bluechip_rewards
 description: BlueChip Rewards — a premium earning & rewards platform.
 publish_to: "none"
-version: 1.4.3+12
+version: 1.5.0+13
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -31,8 +31,14 @@ dependencies:
   # Auth
   google_sign_in: ^6.2.1
 
-  # Ads
+  # Ads — per-placement network selection (AdMob / AppLovin / Unity).
+  # AdMob serves with public test units out of the box. AppLovin & Unity are
+  # integrated but only initialise when their keys are supplied (see AppConfig
+  # applovinSdkKey / unityGameId); until then those placements fall back to
+  # AdMob test ads at runtime.
   google_mobile_ads: ^5.1.0
+  applovin_max: ^3.9.1
+  unity_ads_plugin: ^0.3.15
 
   # UX / utilities
   share_plus: ^12.0.0
