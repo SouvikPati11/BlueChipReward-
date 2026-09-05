@@ -133,6 +133,24 @@ jobs:
       - name: Build debug APK
         run: flutter build apk --debug
 
+      - name: Verify debug APK signer (must be the registered 03:8B keystore)
+        run: |
+          set -euo pipefail
+          APK=build/app/outputs/flutter-apk/app-debug.apk
+          # SHA-1 of android_keys/debug.keystore (androiddebugkey), the cert
+          # registered as the debug Android OAuth client for Google Sign-In.
+          EXPECT="038BBE49DEB1FF6139F58BCB81AD14C2BBA92364"
+          test -f "$APK" || { echo "::error::debug APK not found at $APK"; exit 1; }
+          GOT="$(keytool -printcert -jarfile "$APK" 2>/dev/null \
+            | grep -Ei 'SHA-?1:' | head -1 | sed -E 's/.*: *//; s/[: ]//g' | tr 'a-f' 'A-F')"
+          echo "Built debug APK signer SHA-1 : $GOT"
+          echo "Expected (debug keystore)    : $EXPECT"
+          if [ "$GOT" != "$EXPECT" ]; then
+            echo "::error::Debug APK is NOT signed with the committed debug keystore (03:8B) — Google Sign-In would fail with ApiException: 10."
+            exit 1
+          fi
+          echo "OK: debug APK is signed with the registered debug keystore (03:8B:BE:49:...)."
+
       - name: Build release AAB (unsigned)
         run: flutter build appbundle --release
         continue-on-error: true
