@@ -141,8 +141,12 @@ jobs:
           # registered as the debug Android OAuth client for Google Sign-In.
           EXPECT="038BBE49DEB1FF6139F58BCB81AD14C2BBA92364"
           test -f "$APK" || { echo "::error::debug APK not found at $APK"; exit 1; }
+          # Extract the 20-byte colon-separated fingerprint directly, then strip
+          # colons (a greedy s/.*:// would swallow the fingerprint's own colons).
           GOT="$(keytool -printcert -jarfile "$APK" 2>/dev/null \
-            | grep -Ei 'SHA-?1:' | head -1 | sed -E 's/.*: *//; s/[: ]//g' | tr 'a-f' 'A-F')"
+            | grep -Ei 'SHA-?1:' | head -1 \
+            | grep -Eio '([0-9A-Fa-f]{2}:){19}[0-9A-Fa-f]{2}' \
+            | tr -d ':' | tr 'a-f' 'A-F')"
           echo "Built debug APK signer SHA-1 : $GOT"
           echo "Expected (debug keystore)    : $EXPECT"
           if [ "$GOT" != "$EXPECT" ]; then
