@@ -298,15 +298,33 @@ class AdsSectionConfig {
       );
 }
 
+/// Per-network Ad unit / placement IDs (NOT SDK keys) from ads_config().
+class AdNetworkIds {
+  final String rewarded;
+  final String banner;
+  const AdNetworkIds({this.rewarded = '', this.banner = ''});
+  factory AdNetworkIds.fromJson(Map<String, dynamic> j) => AdNetworkIds(
+        rewarded: (j['rewarded'] as String?) ?? '',
+        banner: (j['banner'] as String?) ?? '',
+      );
+}
+
 class AdsConfig {
   final bool system;
   final bool rewardedGlobal;
   final bool bannerGlobal;
+  // Global test/production mode. When true the client serves TEST inventory and
+  // ignores the stored production IDs.
+  final bool testMode;
+  // Admin-editable Ad unit / placement IDs per network (admob/applovin/unity).
+  final Map<String, AdNetworkIds> networks;
   final Map<String, AdsSectionConfig> sections;
   const AdsConfig({
     required this.system,
     required this.rewardedGlobal,
     required this.bannerGlobal,
+    this.testMode = true,
+    this.networks = const {},
     required this.sections,
   });
 
@@ -324,6 +342,22 @@ class AdsConfig {
   String networkFor(String key) => section(key).network;
   String bannerNetworkFor(String key) => section(key).bannerNetwork;
 
+  // Google's official public AdMob test units — always safe to serve.
+  static const String admobTestRewarded =
+      'ca-app-pub-3940256099942544/5224354917';
+  static const String admobTestBanner =
+      'ca-app-pub-3940256099942544/6300978111';
+
+  /// The AdMob rewarded/banner unit id the client should serve. In test mode
+  /// this is the public test unit (authoritative — production ids are ignored).
+  /// In production mode it is the admin-configured id, or '' when unset (the
+  /// caller then falls back to the build-time unit / test unit). AdMob is the
+  /// network that actually serves today; AppLovin/Unity fall back to it.
+  String admobRewardedUnit() =>
+      testMode ? admobTestRewarded : (networks['admob']?.rewarded ?? '');
+  String admobBannerUnit() =>
+      testMode ? admobTestBanner : (networks['admob']?.banner ?? '');
+
   factory AdsConfig.fromJson(Map<String, dynamic> j) {
     final secs = <String, AdsSectionConfig>{};
     final raw = (j['sections'] as Map?)?.cast<String, dynamic>() ?? {};
@@ -331,10 +365,18 @@ class AdsConfig {
       secs[e.key] =
           AdsSectionConfig.fromJson((e.value as Map).cast<String, dynamic>());
     }
+    final nets = <String, AdNetworkIds>{};
+    final rawNets = (j['networks'] as Map?)?.cast<String, dynamic>() ?? {};
+    for (final e in rawNets.entries) {
+      nets[e.key] =
+          AdNetworkIds.fromJson((e.value as Map).cast<String, dynamic>());
+    }
     return AdsConfig(
       system: j['system'] as bool? ?? true,
       rewardedGlobal: j['rewarded_global'] as bool? ?? true,
       bannerGlobal: j['banner_global'] as bool? ?? true,
+      testMode: j['test_mode'] as bool? ?? true,
+      networks: nets,
       sections: secs,
     );
   }

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/state_views.dart';
 import '../../providers/auth_providers.dart';
+import 'tabs/admin_ads_tab.dart';
 import 'tabs/admin_analytics_tab.dart';
 import 'tabs/admin_audit_tab.dart';
 import 'tabs/admin_content_tab.dart';
@@ -47,6 +48,7 @@ class _AdminHomeState extends ConsumerState<AdminHome> {
     _Section('Contests', Icons.emoji_events_rounded, AdminContestClaimsTab()),
     _Section('Users', Icons.group_rounded, AdminUsersTab()),
     _Section('Content', Icons.dashboard_customize_rounded, AdminContentTab()),
+    _Section('Ads', Icons.ondemand_video_rounded, AdminAdsTab()),
     _Section('Config', Icons.tune_rounded, AdminSettingsTab()),
     _Section('Audit log', Icons.receipt_long_rounded, AdminAuditTab()),
   ];

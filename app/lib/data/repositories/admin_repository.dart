@@ -532,6 +532,21 @@ class AdminRepository {
     }
   }
 
+  /// Ads funnel analytics (requests / impressions / rewarded / credited),
+  /// overall and per network, from the server ad_events funnel.
+  Future<Map<String, dynamic>> adsAnalytics(
+      {DateTime? from, DateTime? to}) async {
+    try {
+      final res = await Db.client.rpc('admin_ads_analytics', params: {
+        'p_from': from?.toUtc().toIso8601String(),
+        'p_to': to?.toUtc().toIso8601String(),
+      });
+      return (res as Map).cast<String, dynamic>();
+    } catch (e) {
+      throw AppFailure.from(e);
+    }
+  }
+
   Future<List<Map<String, dynamic>>> withdrawalsDetailed(String status) async {
     try {
       final res = await Db.client

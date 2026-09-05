@@ -10,22 +10,38 @@ import '../config/app_config.dart';
 class RewardedAdService {
   RewardedAd? _ad;
   bool _loading = false;
+  String? _loadedUnit;
 
-  String get _unitId => AppConfig.admobRewardedAdUnit.isNotEmpty
-      ? AppConfig.admobRewardedAdUnit
-      // Google's official test rewarded unit — safe default.
-      : 'ca-app-pub-3940256099942544/5224354917';
+  /// Resolves the rewarded ad unit to serve. Priority:
+  ///   1. [override] — the admin-configured AdMob unit from ads_config (only
+  ///      passed when test mode is OFF and a production id is set),
+  ///   2. the build-time AppConfig unit, then
+  ///   3. Google's official test rewarded unit (safe default).
+  String _resolveUnit(String? override) {
+    if (override != null && override.isNotEmpty) return override;
+    if (AppConfig.admobRewardedAdUnit.isNotEmpty) {
+      return AppConfig.admobRewardedAdUnit;
+    }
+    return 'ca-app-pub-3940256099942544/5224354917';
+  }
 
-  Future<void> preload() async {
+  Future<void> preload({String? unitId}) async {
+    final want = _resolveUnit(unitId);
+    // If a differently-targeted ad is cached, drop it so we serve the right unit.
+    if (_ad != null && _loadedUnit != want) {
+      _ad?.dispose();
+      _ad = null;
+    }
     if (_ad != null || _loading) return;
     _loading = true;
     final completer = Completer<void>();
     RewardedAd.load(
-      adUnitId: _unitId,
+      adUnitId: want,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
           _ad = ad;
+          _loadedUnit = want;
           _loading = false;
           if (!completer.isCompleted) completer.complete();
         },
@@ -46,8 +62,11 @@ class RewardedAdService {
   /// authorised server-side (reward_ad / gated RPCs); this only reports the
   /// AdMob lifecycle. [onImpression] fires when the ad is shown, [onEarned]
   /// when AdMob reports the reward callback.
-  Future<bool> show({void Function()? onImpression, void Function()? onEarned}) async {
-    if (_ad == null) await preload();
+  Future<bool> show(
+      {String? unitId,
+      void Function()? onImpression,
+      void Function()? onEarned}) async {
+    if (_ad == null) await preload(unitId: unitId);
     final ad = _ad;
     if (ad == null) return false;
 

@@ -37,6 +37,8 @@ Future<String?> runRewardedGate(WidgetRef ref, String placement) async {
 
   // Admin-selected network for this placement (AdMob / AppLovin / Unity).
   final network = adNetworkFromString(cfg?.networkFor(placement));
+  // Admin-configured AdMob unit id (empty in test mode → build-time/test unit).
+  final unitId = cfg?.admobRewardedUnit();
 
   final nonce = await repo.adBegin(placement);
   var impressed = false;
@@ -44,6 +46,7 @@ Future<String?> runRewardedGate(WidgetRef ref, String placement) async {
 
   final shown = await ads.show(
     network,
+    unitId: unitId,
     onImpression: () => impressed = true,
     onEarned: () => earned = true,
   );

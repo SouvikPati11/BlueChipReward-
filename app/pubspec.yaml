@@ -1,7 +1,7 @@
 name: bluechip_rewards
 description: BlueChip Rewards — a premium earning & rewards platform.
 publish_to: "none"
-version: 1.5.0+13
+version: 1.5.1+14
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

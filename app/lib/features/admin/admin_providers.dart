@@ -72,6 +72,15 @@ final adminAnalyticsProvider =
   return ref.watch(adminRepositoryProvider).analytics(from: r.from, to: r.to);
 });
 
+/// Ads analytics (funnel + per-network), sharing the dashboard date range.
+final adminAdsAnalyticsProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) {
+  final r = ref.watch(adminAnalyticsRangeProvider);
+  return ref
+      .watch(adminRepositoryProvider)
+      .adsAnalytics(from: r.from, to: r.to);
+});
+
 final adminWithdrawalsDetailedProvider = FutureProvider.autoDispose
     .family<List<Map<String, dynamic>>, String>((ref, status) {
   return ref.watch(adminRepositoryProvider).withdrawalsDetailed(status);

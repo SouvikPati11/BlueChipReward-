@@ -39,21 +39,29 @@ class _BannerAdBarState extends ConsumerState<BannerAdBar> {
   bool _loaded = false;
   bool _started = false;
 
-  String get _unitId => AppConfig.admobBannerAdUnit.isNotEmpty
-      ? AppConfig.admobBannerAdUnit
-      // Google's official test banner unit — safe default.
-      : 'ca-app-pub-3940256099942544/6300978111';
+  /// Resolves the banner unit. Priority: the admin-configured AdMob banner unit
+  /// from ads_config (empty in test mode) → the build-time AppConfig unit →
+  /// Google's official test banner unit (safe default).
+  String _resolveUnit(String? adminUnit) {
+    if (adminUnit != null && adminUnit.isNotEmpty) return adminUnit;
+    if (AppConfig.admobBannerAdUnit.isNotEmpty) {
+      return AppConfig.admobBannerAdUnit;
+    }
+    return 'ca-app-pub-3940256099942544/6300978111';
+  }
 
   Future<void> _load() async {
     if (_started || !mounted) return;
     _started = true;
     try {
+      final adminUnit =
+          ref.read(adsConfigProvider).valueOrNull?.admobBannerUnit();
       final width = MediaQuery.of(context).size.width.truncate();
       final size = await AdSize.getAnchoredAdaptiveBannerAdSize(
           Orientation.portrait, width);
       if (size == null || !mounted) return;
       final ad = BannerAd(
-        adUnitId: _unitId,
+        adUnitId: _resolveUnit(adminUnit),
         size: size,
         request: const AdRequest(),
         listener: BannerAdListener(

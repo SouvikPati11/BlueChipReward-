@@ -36,21 +36,25 @@ class RewardedAdManager {
   AdNetwork effectiveNetwork(AdNetwork requested) =>
       _isReady(requested) ? requested : AdNetwork.admob;
 
-  Future<void> preload([AdNetwork network = AdNetwork.admob]) {
+  Future<void> preload(
+      [AdNetwork network = AdNetwork.admob, String? unitId]) {
     switch (effectiveNetwork(network)) {
       case AdNetwork.admob:
       case AdNetwork.applovin:
       case AdNetwork.unity:
-        return _admob.preload();
+        return _admob.preload(unitId: unitId);
     }
   }
 
   bool get isReady => _admob.isReady;
 
-  /// Shows a rewarded ad on the effective network. Returns true if the user
-  /// earned the reward (the server still authorises the actual BCP).
+  /// Shows a rewarded ad on the effective network. [unitId] is the admin-
+  /// configured AdMob unit from ads_config (empty in test mode → the service
+  /// falls back to the build-time/test unit). Returns true if the user earned
+  /// the reward (the server still authorises the actual BCP).
   Future<bool> show(
     AdNetwork network, {
+    String? unitId,
     void Function()? onImpression,
     void Function()? onEarned,
   }) {
@@ -60,7 +64,8 @@ class RewardedAdManager {
       case AdNetwork.unity:
         // AppLovin/Unity serving is wired once their keys are provided; until
         // then the effective network is AdMob (see effectiveNetwork).
-        return _admob.show(onImpression: onImpression, onEarned: onEarned);
+        return _admob.show(
+            unitId: unitId, onImpression: onImpression, onEarned: onEarned);
     }
   }
 
